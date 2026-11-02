@@ -1,0 +1,64 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Circular Campus{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/circular.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+{#  Shared page layout (Design Document Section 7 mockups).                    #}
+{#  Every page does:  {% extends "base.html" %}                                 #}
+{#    {% block nav_assets %}on{% endblock %} <- highlights that menu item       #}
+{#    {% block content %} ... {% endblock %} <- the page itself                  #}
+<div class="app">
+  <header class="topbar">
+    <a class="brand" href="/">Circular Campus</a>
+    {# Signed-in user and role indicator #}
+    <div class="who" aria-label="Signed-in user">
+      {% if user.is_authenticated %}
+        {% if user.department %}<span class="dept">{{ user.department.name }}</span> ·{% endif %}
+        <span>{{ user.name }}</span>
+        {% for role in user.roles.all %}<span class="role">{{ role }}</span>{% empty %}<span class="role">No role</span>{% endfor %}
+        <span class="avatar" title="{{ user.email }}">{{ user.initials }}</span>
+      {% else %}
+        <span class="role">Not signed in</span>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="main">
+    {% block sidebar %}
+    {# Menu items of the mockups. Feature owners replace "#" with {% url %} when their page exists. #}
+    <nav class="side" aria-label="Main menu">
+      <a href="#" class="{% block nav_dashboard %}{% endblock %}">Dashboard</a>
+      <a href="#" class="{% block nav_assets %}{% endblock %}">Assets</a>
+      <a href="#" class="{% block nav_requests %}{% endblock %}">Requests</a>
+      <a href="#" class="{% block nav_matches %}{% endblock %}">Matches</a>
+      <a href="#" class="{% block nav_transfers %}{% endblock %}">Transfers</a>
+      <a href="#" class="{% block nav_approvals %}{% endblock %}">Approvals</a>
+      <a href="#" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>
+      <a href="#" class="{% block nav_reports %}{% endblock %}">Reports</a>
+      <a href="#" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>
+      <a href="#" class="{% block nav_inbox %}{% endblock %}">Inbox</a>
+    </nav>
+    {% endblock %}
+
+    <main class="content">
+      {% if messages %}
+        <ul class="messages">
+          {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <footer class="foot">
+    <span>Fictional demonstration data (P3-NFR-S05)</span>
+    <span>AI suggestions never approve, release or retire anything</span>
+  </footer>
+</div>
+</body>
+</html>

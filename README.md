@@ -36,6 +36,8 @@ reports/           Sustainability dashboard, reports, CSV export          (Saeed
 notifications/     In-app notifications                                   (Abdullah)
 ai/                AI gateway, AI services and AI records                 (Humaid, Ali)
 docs/              Phase reports, design document and meeting notes
+templates/         Shared page layout (base.html)
+static/css/        The one shared stylesheet (circular.css)
 docker-compose.yml PostgreSQL 16 + pgvector database for local development
 requirements.txt   Python packages, same versions for everyone
 .env.example       Template for your local .env file (no real keys)
@@ -135,6 +137,28 @@ AssetStatus, RequestStatus, ...) are in `circular_campus/choices.py`.
 | reports | SustainabilityImpact |
 | notifications | Notification |
 | ai | ModelVersion, AIRecord |
+
+## Page layout and styles
+
+Every page extends the shared layout in `templates/base.html` and uses the one
+stylesheet `static/css/circular.css`, copied from our mockups (Design Document
+Section 7). The top bar shows the signed-in user, their department and role.
+
+```django
+{% extends "base.html" %}
+{% block title %}Assets - Circular Campus{% endblock %}
+{% block nav_assets %}on{% endblock %}
+{% block content %}
+  <h1>Assets</h1>
+  <div class="card">...</div>
+{% endblock %}
+```
+
+Useful classes: `card`, `card ai` (every AI suggestion), `num`/`kpi`,
+`tag ok|warn|bad|ai`, `btn primary|danger`, `grid` (two-column form),
+`down` (AI unavailable box). Menu items: `nav_dashboard`, `nav_assets`,
+`nav_requests`, `nav_matches`, `nav_transfers`, `nav_approvals`,
+`nav_maintenance`, `nav_reports`, `nav_sustainability`, `nav_inbox`.
 
 ## Working rules
 

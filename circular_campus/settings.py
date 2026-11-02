@@ -131,6 +131,7 @@ USE_TZ = True
 
 # --- Static files and uploads ---------------------------------------------
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]  # the shared stylesheet lives in static/css/
 STATIC_ROOT = BASE_DIR / "staticfiles"   # filled by collectstatic, git-ignored
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"          # uploaded photos/PDFs, git-ignored

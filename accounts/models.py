@@ -76,6 +76,11 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.name} <{self.email}>"
 
+    @property
+    def initials(self):
+        """Two letters for the avatar in the top bar, e.g. "Synthetic Custodian" -> "SC"."""
+        return "".join(part[0] for part in self.name.split()[:2]).upper() or self.email[:1].upper()
+
     def has_role(self, role_name):
         """True if the user holds the role, e.g. user.has_role(RoleName.APPROVER)."""
         return self.roles.filter(name=role_name).exists()
