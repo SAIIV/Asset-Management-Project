@@ -160,6 +160,21 @@ Useful classes: `card`, `card ai` (every AI suggestion), `num`/`kpi`,
 `nav_requests`, `nav_matches`, `nav_transfers`, `nav_approvals`,
 `nav_maintenance`, `nav_reports`, `nav_sustainability`, `nav_inbox`.
 
+## Running the tests
+
+The database must be running (`docker compose up -d`). Then:
+
+```powershell
+python manage.py test
+```
+
+Django creates a separate, empty test database, runs every app's `tests.py`
+and deletes it again; your own data is not touched. The foundation tests
+check that the 26 tables and the main data-dictionary rules exist in
+PostgreSQL (one Active reservation per asset, an approval has exactly one
+target, quantity of at least 1, and so on). Shared helpers that build valid test
+records are in `circular_campus/test_utils.py`.
+
 ## Working rules
 
 - Never commit to `main`. Create a branch per feature, for example
