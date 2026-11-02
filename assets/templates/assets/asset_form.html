@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit asset{% else %}Register an asset{% endif %} - Circular Campus{% endblock %}
+{% block nav_assets %}on{% endblock %}
+{% block content %}
+{% if editing %}
+  <h1>Edit asset #{{ asset.pk }}</h1>
+  <div class="sub">{{ asset.name }} · {{ asset.owner_department.name }} · status {{ asset.get_status_display }} (status changes happen through reservations and transfers)</div>
+{% else %}
+  <h1>Register an asset</h1>
+  <div class="sub">The asset is added to {{ user.department.name }}. Fields marked * are required.</div>
+{% endif %}
+
+{% if form.non_field_errors %}
+  <div class="card form-error">{% for error in form.non_field_errors %}{{ error }} {% endfor %}</div>
+{% endif %}
+
+{# Mockup M1: the AI suggestion panel. AI #1 (Humaid) fills it later; until then this is the "AI down" state. #}
+<div class="down">AI category suggestion is not connected yet. Choose the category from the list; nothing is filled in automatically.</div>
+
+<form method="post" class="card asset-form" novalidate>
+  {% csrf_token %}
+  {{ form.version }}
+
+  <h2>What it is</h2>
+  <div class="grid">
+    {% include "assets/_field.html" with field=form.name %}
+    {% include "assets/_field.html" with field=form.kind %}
+    {% include "assets/_field.html" with field=form.category %}
+    {% include "assets/_field.html" with field=form.condition %}
+    {% if form.status %}{% include "assets/_field.html" with field=form.status %}{% endif %}
+    {% include "assets/_field.html" with field=form.tags_text %}
+  </div>
+  {% include "assets/_field.html" with field=form.description %}
+
+  <h2>Type details</h2>
+  <div class="grid">
+    {% include "assets/_field.html" with field=form.serial_number %}
+    {% include "assets/_field.html" with field=form.calibration_due %}
+    {% include "assets/_field.html" with field=form.material %}
+  </div>
+  <p class="kpi">Fill in the field for the type you chose: serial number for IT equipment, material for furniture. The others are ignored.</p>
+
+  <h2>Where it is</h2>
+  <div class="grid three">
+    {% include "assets/_field.html" with field=form.campus %}
+    {% include "assets/_field.html" with field=form.building %}
+    {% include "assets/_field.html" with field=form.room %}
+  </div>
+
+  <h2>Value and weight</h2>
+  <div class="grid three">
+    {% include "assets/_field.html" with field=form.purchase_date %}
+    {% include "assets/_field.html" with field=form.estimated_value_aed %}
+    {% include "assets/_field.html" with field=form.mass_kg %}
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary">{% if editing %}Save changes{% else %}Register asset{% endif %}</button>
+    <a class="btn" href="{% if editing %}{% url 'assets:detail' asset.pk %}{% else %}{% url 'assets:list' %}{% endif %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

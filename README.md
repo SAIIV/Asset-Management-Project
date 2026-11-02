@@ -163,6 +163,32 @@ if not can(request.user, Action.APPROVE_REQUEST, resource_request):
 Write audit events with `AuditService.log(user, action, record, before=..., after=..., reason=...)`
 from `accounts/services.py`. Sign-in, failed sign-in and sign-out are logged automatically.
 
+## Assets (C2)
+
+Sign in as `custodian@circular-campus.example` and click **Assets** in the menu.
+
+| Page | Address | Use case |
+|------|---------|----------|
+| Your department's assets (search by name, filter by status) | `/assets/` | - |
+| Register an asset | `/assets/new/` | UC-04 |
+| Asset details | `/assets/<id>/` | - |
+| Edit an asset | `/assets/<id>/edit/` | UC-05 |
+
+Rules (in `assets/services.py`, `AssetService`):
+
+- Only a Custodian can use these pages, and only for assets of their own department.
+  Opening another department's asset gives "403 not allowed", even by typing its ID.
+- A new asset always belongs to the custodian's department and starts as Draft,
+  Available or In use. Later status changes come from reservations and transfers (C5, C6).
+- IT equipment needs a unique serial number; furniture needs a material.
+  Value cannot be negative, mass must be above 0, and the purchase date cannot be in the future.
+- An asset that is Reserved, In transit or Retired cannot be edited.
+- If two people edit the same asset, the second save is refused instead of
+  overwriting the first (the `version` column).
+- Every registration and edit writes an audit log row with the old and new values.
+
+Departments and categories are maintained by the Administrator in the admin site (`/admin/`).
+
 ## Page layout and styles
 
 Every page extends the shared layout in `templates/base.html` and uses the one
