@@ -1,0 +1,26 @@
+# PostgreSQL 16 with the pgvector extension, for local development.
+# Start:  docker compose up -d      Stop: docker compose down
+# The database user, password and name come from your .env file.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: circular_campus_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Data is kept in a named Docker volume, so it survives "docker compose down".
+      # "docker compose down -v" deletes it and gives you an empty database.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
