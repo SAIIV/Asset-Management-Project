@@ -94,7 +94,29 @@ You need: Python 3.12, Git, Docker Desktop and VS Code.
    `migrate` turns on the pgvector extension and creates the 26 tables of
    the design document (Section 9) plus Django's own tables.
 
-More setup steps (test data) are added as they land.
+7. Load the synthetic test data:
+
+   ```powershell
+   python manage.py seed_data
+   ```
+
+   This creates 8 roles, 5 fictional departments, 12 categories, 50 synthetic
+   assets and 4 test users. All of it is invented and marked "Synthetic";
+   no real staff or asset data is used. Running it again does not create
+   duplicates.
+
+   | Role | Email | Password |
+   |---|---|---|
+   | Requester | requester@circular-campus.example | Synthetic-Demo-2026 |
+   | Custodian | custodian@circular-campus.example | Synthetic-Demo-2026 |
+   | Approver | approver@circular-campus.example | Synthetic-Demo-2026 |
+   | Administrator | admin@circular-campus.example | Synthetic-Demo-2026 |
+
+   The Administrator can open the Django admin at http://127.0.0.1:8000/admin/
+   after `python manage.py runserver`. To start again from an empty database:
+   `docker compose down -v`, `docker compose up -d`, `migrate`, `seed_data`.
+
+More setup steps are added as they land.
 
 ## Data model
 
