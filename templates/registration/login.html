@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sign in - Circular Campus{% endblock %}
+{% block sidebar %}{% endblock %}
+{% block content %}
+<div class="signin">
+  <h1>Sign in</h1>
+  <div class="sub">Use your campus email and password.</div>
+
+  {% if form.non_field_errors %}
+    <div class="card form-error">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" action="{% url 'login' %}" class="card">
+    {% csrf_token %}
+    <div class="field">
+      <label for="{{ form.username.id_for_label }}">Email</label>
+      {{ form.username }}
+    </div>
+    <div class="field">
+      <label for="{{ form.password.id_for_label }}">Password</label>
+      {{ form.password }}
+    </div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn primary">Sign in</button>
+  </form>
+
+  <p class="kpi">Test accounts are listed in the README (synthetic data only).</p>
+</div>
+{% endblock %}

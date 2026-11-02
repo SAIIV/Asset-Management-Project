@@ -138,6 +138,31 @@ AssetStatus, RequestStatus, ...) are in `circular_campus/choices.py`.
 | notifications | Notification |
 | ai | ModelVersion, AIRecord |
 
+## Signing in and permissions (C1)
+
+Start the site with `python manage.py runserver` and open http://127.0.0.1:8000/.
+You are sent to the sign-in page; use one of the test accounts above. After
+signing in, the start page lists what your role is allowed to do.
+
+Every view must check the access matrix (Design Document Section 6.2) on the
+server with `can(user, action, record)` from `accounts/permissions.py`.
+The default is deny.
+
+```python
+from accounts.decorators import permission_required, ActionRequiredMixin
+from accounts.permissions import Action, can
+
+@permission_required(Action.REGISTER_ASSET)          # role check
+def register_asset(request): ...
+
+# record check: own department, own request, not your own request (BR-02)
+if not can(request.user, Action.APPROVE_REQUEST, resource_request):
+    raise PermissionDenied
+```
+
+Write audit events with `AuditService.log(user, action, record, before=..., after=..., reason=...)`
+from `accounts/services.py`. Sign-in, failed sign-in and sign-out are logged automatically.
+
 ## Page layout and styles
 
 Every page extends the shared layout in `templates/base.html` and uses the one
