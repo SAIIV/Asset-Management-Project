@@ -84,15 +84,35 @@ You need: Python 3.12, Git, Docker Desktop and VS Code.
    The data is kept in a Docker volume. `docker compose down` stops the
    database; `docker compose down -v` also deletes all data.
 
-6. Check that Django starts and can reach the database:
+6. Check that Django starts, then create all tables:
 
    ```powershell
    python manage.py check
-   python manage.py showmigrations
+   python manage.py migrate
    ```
 
-Migrations and test data are added in the next setup steps; this section will
-be extended as they land.
+   `migrate` turns on the pgvector extension and creates the 26 tables of
+   the design document (Section 9) plus Django's own tables.
+
+More setup steps (test data) are added as they land.
+
+## Data model
+
+All 26 tables of the Design Document, Section 9 are Django models. Table and
+column names in PostgreSQL are exactly the names of the data dictionary and
+Figure 63 (for example `"Asset"."estimatedValueAED"`); in Python the same
+column is `asset.estimated_value_aed`. All enumerations (Condition,
+AssetStatus, RequestStatus, ...) are in `circular_campus/choices.py`.
+
+| App | Tables |
+|---|---|
+| accounts | User, Role, UserRole, AuditLog |
+| assets | Department, Category, Asset, ITAsset, LabEquipment, FurnitureAsset, AssetCollection, AssetCollectionItem, Attachment, Inspection, MaintenanceRecord, LifecycleAction |
+| exchange | ResourceRequest, RequestSpecification, MatchRecommendation |
+| transfers | Reservation, Approval, Transfer |
+| reports | SustainabilityImpact |
+| notifications | Notification |
+| ai | ModelVersion, AIRecord |
 
 ## Working rules
 
