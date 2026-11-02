@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ asset.name }} - Circular Campus{% endblock %}
+{% block nav_assets %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>#{{ asset.pk }} {{ asset.name }}</h1>
+    <div class="sub">
+      {{ kind_label }} · {{ asset.owner_department.name }} ·
+      <span class="tag">{{ asset.get_status_display }}</span>
+      {% if asset.is_listed %}<span class="tag ok">Listed</span>{% endif %}
+    </div>
+  </div>
+  <div>
+    {% if locked %}
+      <span class="tag warn">Cannot be edited while {{ asset.get_status_display }}</span>
+    {% else %}
+      <a class="btn primary" href="{% url 'assets:edit' asset.pk %}">Edit</a>
+    {% endif %}
+    <a class="btn" href="{% url 'assets:list' %}">Back to list</a>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Details</h2>
+    <dl class="facts">
+      <dt>Category</dt><dd>{{ asset.category.name }}</dd>
+      <dt>Condition</dt><dd>{{ asset.get_condition_display }}</dd>
+      <dt>Description</dt><dd>{{ asset.description|default:"—" }}</dd>
+      <dt>Tags</dt><dd>{% for tag in asset.tags %}<span class="tag">{{ tag }}</span>{% empty %}—{% endfor %}</dd>
+      {% if details.serial_number %}<dt>Serial number</dt><dd>{{ details.serial_number }}</dd>{% endif %}
+      {% if kind_label == "Lab equipment" %}<dt>Calibration due</dt><dd>{{ details.calibration_due|default:"—" }}</dd>{% endif %}
+      {% if details.material %}<dt>Material</dt><dd>{{ details.material }}</dd>{% endif %}
+    </dl>
+  </div>
+  <div class="card">
+    <h2>Location and value</h2>
+    <dl class="facts">
+      <dt>Campus</dt><dd>{{ asset.campus|default:"—" }}</dd>
+      <dt>Building / room</dt><dd>{{ asset.building|default:"—" }}{% if asset.room %}, room {{ asset.room }}{% endif %}</dd>
+      <dt>Purchase date</dt><dd>{{ asset.purchase_date|default:"—" }}{% if asset.asset_age_years is not None %} ({{ asset.asset_age_years }} years old){% endif %}</dd>
+      <dt>Estimated value</dt><dd>{% if asset.estimated_value_aed is not None %}AED {{ asset.estimated_value_aed }}{% else %}—{% endif %}</dd>
+      <dt>Mass</dt><dd>{% if asset.mass_kg is not None %}{{ asset.mass_kg|floatformat:"-3" }} kg{% else %}Unknown{% endif %}</dd>
+      <dt>Record version</dt><dd>{{ asset.version }}</dd>
+    </dl>
+  </div>
+</div>
+{% endblock %}

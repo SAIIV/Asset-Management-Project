@@ -33,8 +33,8 @@
     {% block sidebar %}
     {# Menu items of the mockups. Feature owners replace "#" with {% url %} when their page exists. #}
     <nav class="side" aria-label="Main menu">
-      <a href="#" class="{% block nav_dashboard %}{% endblock %}">Dashboard</a>
-      <a href="#" class="{% block nav_assets %}{% endblock %}">Assets</a>
+      <a href="{% url 'home' %}" class="{% block nav_dashboard %}{% endblock %}">Dashboard</a>
+      <a href="{% if 'register_asset' in allowed %}{% url 'assets:list' %}{% else %}#{% endif %}" class="{% block nav_assets %}{% endblock %}">Assets</a>
       <a href="#" class="{% block nav_requests %}{% endblock %}">Requests</a>
       <a href="#" class="{% block nav_matches %}{% endblock %}">Matches</a>
       <a href="#" class="{% block nav_transfers %}{% endblock %}">Transfers</a>

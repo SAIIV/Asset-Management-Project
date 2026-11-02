@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Not allowed - Circular Campus{% endblock %}
+{% block content %}
+<h1>You don't have access to this page</h1>
+<div class="sub">Your role, or the department this record belongs to, doesn't allow it (access matrix, Design Document Section 6.2).</div>
+<p><a class="btn" href="{% url 'home' %}">Back to the start page</a></p>
+{% endblock %}
