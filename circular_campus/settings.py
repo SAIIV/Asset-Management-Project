@@ -114,6 +114,14 @@ DATABASES = {
 # so it is set before any table exists.
 AUTH_USER_MODEL = "accounts.User"
 
+# Sign-in (C1). Pages that need a signed-in user send visitors to LOGIN_URL.
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "login"
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True   # closing the browser ends the session
+SESSION_COOKIE_AGE = 8 * 60 * 60         # and a session never lasts more than 8 hours
+SESSION_COOKIE_HTTPONLY = True           # page scripts cannot read the session cookie
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

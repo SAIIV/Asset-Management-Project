@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Start - Circular Campus{% endblock %}
+{% block nav_dashboard %}on{% endblock %}
+{% block content %}
+<h1>Welcome, {{ user.name }}</h1>
+<div class="sub">
+  {% if user.department %}{{ user.department.name }} · {% endif %}
+  {% for role in user.roles.all %}<span class="tag ai">{{ role }}</span>{% empty %}<span class="tag warn">No role assigned</span>{% endfor %}
+</div>
+
+<div class="card">
+  <h2>What your role can do</h2>
+  {% if actions %}
+    <ul class="can-list">
+      {% for action in actions %}<li><span class="tag ok">Allowed</span> {{ action.label }}</li>{% endfor %}
+    </ul>
+    <p class="kpi">From the access matrix (Design Document Section 6.2). Everything else is denied by default.
+      "Own department" and "not your own request" are checked again on every record.</p>
+  {% else %}
+    <p>Your account has no role yet. Ask the Administrator to assign one.</p>
+  {% endif %}
+</div>
+{% endblock %}
