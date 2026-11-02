@@ -92,11 +92,17 @@ TEMPLATES = [
 
 
 # --- Database -------------------------------------------------------------
-# Temporary: Step 2 replaces this with PostgreSQL 16 + pgvector read from .env.
+# PostgreSQL 16 + pgvector, started with "docker compose up -d".
+# The same DB_* values in .env are used by docker-compose.yml to create the
+# database, so Django and Docker always agree on the credentials.
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB_NAME", required=True),
+        "USER": env("DB_USER", required=True),
+        "PASSWORD": env("DB_PASSWORD", required=True),
+        "HOST": env("DB_HOST", "localhost"),
+        "PORT": env("DB_PORT", "5432"),
     }
 }
 

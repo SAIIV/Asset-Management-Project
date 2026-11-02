@@ -21,7 +21,7 @@ The full design is in [docs/phase-4-5/](docs/phase-4-5/) and the Phase 6 plan
 |---|---|
 | Language | Python 3.12 |
 | Web framework | Django 5.2 (LTS), server-rendered templates |
-| Database | PostgreSQL 16 with the pgvector extension (run in Docker) |
+| Database | PostgreSQL 16 with the pgvector extension, run in Docker (`docker-compose.yml`) |
 | Secrets | `.env` file, never committed (see `.env.example`) |
 
 ## Repository structure
@@ -36,6 +36,7 @@ reports/           Sustainability dashboard, reports, CSV export          (Saeed
 notifications/     In-app notifications                                   (Abdullah)
 ai/                AI gateway, AI services and AI records                 (Humaid, Ali)
 docs/              Phase reports, design document and meeting notes
+docker-compose.yml PostgreSQL 16 + pgvector database for local development
 requirements.txt   Python packages, same versions for everyone
 .env.example       Template for your local .env file (no real keys)
 ```
@@ -69,16 +70,29 @@ You need: Python 3.12, Git, Docker Desktop and VS Code.
 
    Paste the printed key after `DJANGO_SECRET_KEY=` in `.env`.
 
-4. Check that Django starts:
+4. Fill in the database values in `.env` (`DB_NAME`, `DB_USER`, `DB_PASSWORD`).
+   Any local password works; Docker creates the database with it.
+
+5. Start PostgreSQL 16 + pgvector in Docker (Docker Desktop must be running):
+
+   ```powershell
+   docker compose up -d
+   docker compose ps
+   ```
+
+   Expected: the `circular_campus_db` container shows `running (healthy)`.
+   The data is kept in a Docker volume. `docker compose down` stops the
+   database; `docker compose down -v` also deletes all data.
+
+6. Check that Django starts and can reach the database:
 
    ```powershell
    python manage.py check
+   python manage.py showmigrations
    ```
 
-   Expected: `System check identified no issues (0 silenced).`
-
-Database, migrations and test data are added in the next setup steps; this
-section will be extended as they land.
+Migrations and test data are added in the next setup steps; this section will
+be extended as they land.
 
 ## Working rules
 
