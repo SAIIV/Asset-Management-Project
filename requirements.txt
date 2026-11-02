@@ -1,0 +1,10 @@
+# Circular Campus - Python packages (install with: pip install -r requirements.txt)
+# Everyone on the team uses this one file so all four laptops run the same versions.
+
+Django>=5.2.8,<5.3          # web framework, 5.2 is the long-term-support line
+psycopg[binary]>=3.2,<4     # PostgreSQL driver used by Django
+pgvector>=0.4,<0.6          # VectorField for embeddings (pgvector extension)
+python-dotenv>=1.0,<2       # reads settings and secrets from the .env file
+
+# AI libraries (openai, sentence-transformers) are added by the AI gateway owner
+# in their own feature branch, so this setup stays small.

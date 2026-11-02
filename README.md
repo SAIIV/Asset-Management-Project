@@ -1,44 +1,101 @@
-# Intelligent Circular Campus Resource Exchange
+# Circular Campus: Intelligent Campus Resource Exchange
 
-COSC 336 - Introduction to Software Engineering, Fall 2026
+COSC 336 - Introduction to Software Engineering, Fall 2026, Group 6
 
 ## Project overview
 
-This project explores an intelligent, AI-powered platform for exchanging campus resources and managing assets throughout their life cycle. The proposed system will help university departments discover reusable assets, match available resources with departmental needs, coordinate approvals and transfers, record maintenance activity, and measure financial and environmental benefits.
+Circular Campus is a web application that helps university departments reuse
+assets instead of buying new ones. Departments register surplus assets, other
+departments request what they need, an approver signs off, and the asset is
+transferred. The system tracks each asset's life cycle (maintenance, donation,
+recycling, disposal) and reports the money, waste and CO2e saved. AI features
+suggest categories, rank matching assets and draft report summaries; a person
+always confirms each AI suggestion.
 
-The project applies the complete software development life cycle and compares classic software functionality with AI-enhanced approaches.
+The full design is in [docs/phase-4-5/](docs/phase-4-5/) and the Phase 6 plan
+(features and owners) is in [docs/phase-6/](docs/phase-6/).
 
-## Current status
+## Technology
 
-The project is in its planning and requirements-gathering stage. Team responsibilities, the technology stack, and detailed requirements have not yet been finalized.
-
-## Planned capabilities
-
-- Register and publish campus assets.
-- Search, filter, reserve, and request available resources.
-- Manage approvals, custody changes, and asset transfers.
-- Record inspections, maintenance, repairs, donations, recycling, and disposal.
-- Manage users, roles, and permissions.
-- Match available assets with departmental requests.
-- Recommend asset categories, tags, and descriptions.
-- Recommend reuse, repair, refurbishment, donation, recycling, or retirement actions.
-- Support natural-language questions and navigation.
-- Generate reports about savings, reuse, maintenance, waste diversion, and environmental impact.
+| Part | Choice |
+|---|---|
+| Language | Python 3.12 |
+| Web framework | Django 5.2 (LTS), server-rendered templates |
+| Database | PostgreSQL 16 with the pgvector extension (run in Docker) |
+| Secrets | `.env` file, never committed (see `.env.example`) |
 
 ## Repository structure
 
 ```text
-docs/
-|-- phase-1/          Initial planning and requirement gathering
-`-- meeting-notes/    Decisions, action items, and meeting records
+circular_campus/   Project settings and top-level URLs
+accounts/          Accounts & Administration: users, roles, audit log      (Ali)
+assets/            Assets & Catalogue: departments, categories, assets    (Saeed)
+exchange/          Search & Requests: requests, match recommendations     (Abdullah, Ali)
+transfers/         Reservations, approvals and transfers                  (Humaid)
+reports/           Sustainability dashboard, reports, CSV export          (Saeed, Abdullah)
+notifications/     In-app notifications                                   (Abdullah)
+ai/                AI gateway, AI services and AI records                 (Humaid, Ali)
+docs/              Phase reports, design document and meeting notes
+requirements.txt   Python packages, same versions for everyone
+.env.example       Template for your local .env file (no real keys)
 ```
 
-Source-code and automated-test folders will be added after the team selects its technology stack and architecture.
+Each folder under the project root is one Django app and matches one module of
+the architecture view in the design document.
 
-## Team and responsibilities
+## Setup for team members (Windows, VS Code)
 
-The team roster and individual responsibilities will be added after roles are agreed with the group.
+You need: Python 3.12, Git, Docker Desktop and VS Code.
 
-## Contributing
+1. Clone the repository and open the folder in VS Code.
+2. Create and activate a virtual environment, then install the packages:
 
-Every member should contribute through their own GitHub account so that the project history accurately records individual work. See [CONTRIBUTING.md](CONTRIBUTING.md) for the recommended workflow.
+   ```powershell
+   py -3.12 -m venv .venv
+   .venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+   If PowerShell blocks `Activate.ps1`, run
+   `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once and try again.
+
+3. Create your own `.env` from the template and put a secret key in it:
+
+   ```powershell
+   copy .env.example .env
+   python -c "import secrets; print(secrets.token_urlsafe(50))"
+   ```
+
+   Paste the printed key after `DJANGO_SECRET_KEY=` in `.env`.
+
+4. Check that Django starts:
+
+   ```powershell
+   python manage.py check
+   ```
+
+   Expected: `System check identified no issues (0 silenced).`
+
+Database, migrations and test data are added in the next setup steps; this
+section will be extended as they land.
+
+## Working rules
+
+- Never commit to `main`. Create a branch per feature, for example
+  `feature/c5-transfer`, and open a pull request; one other member reviews it.
+- Commit from your own GitHub account so the history shows who built what.
+- Only Saeed changes models and migrations. Ask Saeed for model changes to avoid
+  migration conflicts.
+- Add Django tests for the rules in your own feature.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the Git workflow.
+
+## Team
+
+| Member | Student ID | Phase 6 features |
+|---|---|---|
+| Saeed Alkaabi | 100063100 | Project setup and data model, C2 Departments and assets, C7 Dashboard, AI #5 Report summary |
+| Ali Alawadhi | 100063186 | C1 Login and roles, C6 States and history, AI #2 Matching and ranking |
+| Humaid Al Ali | 100062914 | AI gateway, AI #1 Classification, C5 Approve and transfer |
+| Abdullah Alblooshi | 100061739 | C3 Publish and search, C4 Request and track, C8 Notifications, C9 Basic report |
