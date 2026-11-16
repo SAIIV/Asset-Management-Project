@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}History of {{ asset.name }} - Circular Campus{% endblock %}
+{% block nav_assets %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>History of #{{ asset.pk }} {{ asset.name }}</h1>
+    <div class="sub">Every change to this asset, newest first. The audit log is insert-only: nothing here can be edited or deleted (BR-14).</div>
+  </div>
+  <a class="btn" href="{% url 'assets:detail' asset.pk %}">Back to asset</a>
+</div>
+<div class="card">
+  {% include "assets/_history_rows.html" with events=page %}
+</div>
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a class="btn" href="?page={{ page.previous_page_number }}">Newer</a>{% endif %}
+  <span class="kpi">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?page={{ page.next_page_number }}">Older</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

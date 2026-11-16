@@ -1,0 +1,23 @@
+{# One table of audit events: who did what, when, and why (C6). Used on the detail and history pages. #}
+<table>
+  <thead><tr><th>When</th><th>Who</th><th>What</th><th>Change</th><th>Reason</th></tr></thead>
+  <tbody>
+    {% for event in events %}
+    <tr>
+      <td>{{ event.created_at|date:"j M Y, H:i" }}</td>
+      <td>{{ event.user.name|default:"System" }}</td>
+      <td>{{ event.action }}</td>
+      <td>
+        {% if event.before_value.status and event.after_value.status %}
+          {{ event.before_value.status }} → {{ event.after_value.status }}
+        {% elif event.after_value %}
+          {% for key, value in event.after_value.items %}{{ key }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ event.reason|default:"—" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Nothing recorded yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

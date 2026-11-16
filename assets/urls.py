@@ -9,4 +9,7 @@ urlpatterns = [
     path("new/", views.asset_create, name="create"),
     path("<int:pk>/", views.asset_detail, name="detail"),
     path("<int:pk>/edit/", views.asset_edit, name="edit"),
+    path("<int:pk>/status/", views.asset_move, name="move"),
+    path("<int:pk>/history/", views.asset_history, name="history"),
+
 ]
