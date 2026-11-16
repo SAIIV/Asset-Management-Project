@@ -46,4 +46,37 @@
     </dl>
   </div>
 </div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Status</h2>
+    <p>Now: <span class="tag">{{ asset.get_status_display }}</span></p>
+    {% if moves %}
+      <form method="post" action="{% url 'assets:move' asset.pk %}" class="asset-form">
+        {% csrf_token %}
+        <div class="field">
+          <label for="id_status">Move to</label>
+          <select name="status" id="id_status">
+            {% for state, event in moves.items %}<option value="{{ state }}">{{ state }} ({{ event }})</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="id_reason">Reason (kept in the history)</label>
+          <input type="text" name="reason" id="id_reason" maxlength="300" placeholder="e.g. screen cracked, sent for repair">
+        </div>
+        <div class="form-actions"><button type="submit" class="btn primary">Change status</button></div>
+      </form>
+    {% else %}
+      <p class="kpi">No status change can be made by hand from {{ asset.get_status_display }}.
+        Reserve, release, receipt and retirement are done through requests and transfers.</p>
+    {% endif %}
+    <p class="help">Only the moves of the asset state diagram (Design Document Figure 56) are offered.</p>
+  </div>
+  <div class="card">
+    <h2>History</h2>
+    {% include "assets/_history_rows.html" with events=history %}
+    <p><a href="{% url 'assets:history' asset.pk %}">Full history</a></p>
+  </div>
+</div>
 {% endblock %}
+

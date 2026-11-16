@@ -18,6 +18,7 @@ from circular_campus.choices import AssetStatus
 from .forms import AssetForm
 from .models import Asset
 from .services import KIND_LABELS, LOCKED_STATUSES, AssetEditError, AssetService, details_of, kind_of
+from .states import IllegalMove, StateService, custodian_moves, history_of
 
 
 def _load_asset(request, pk):
@@ -66,7 +67,41 @@ def asset_detail(request, pk):
         "kind_label": KIND_LABELS[kind],
         "details": details_of(asset, kind),
         "locked": asset.status in LOCKED_STATUSES,
+        "moves": custodian_moves(asset),
+        "history": history_of("Asset", asset.pk)[:5],
     })
+
+
+@permission_required(Action.REGISTER_ASSET, record=_load_asset)
+def asset_move(request, pk):
+    """C6: change the status by hand, only along an arrow of the asset state diagram (Figure 56)."""
+    asset = _load_asset(request, pk)
+    if request.method != "POST":
+        return redirect("assets:detail", pk=asset.pk)
+    new_status = request.POST.get("status", "")
+    # Only the moves offered on the page; reserve, release, receive and retire
+    # are made by the request and transfer services, not typed in here.
+    if new_status not in custodian_moves(asset):
+        messages.error(request, f"An asset that is {asset.get_status_display()} cannot be moved to "
+                                f"“{new_status or 'nothing'}” from this page.")
+        return redirect("assets:detail", pk=asset.pk)
+    try:
+        StateService.move(request.user, asset, new_status, reason=request.POST.get("reason", "").strip(),
+                          action="change_asset_status")
+    except IllegalMove as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, f"Status changed to {asset.get_status_display()}.")
+    return redirect("assets:detail", pk=asset.pk)
+
+
+@permission_required(Action.REGISTER_ASSET, record=_load_asset)
+def asset_history(request, pk):
+    """C6: everything that happened to the asset - who did what, when, and why."""
+    asset = _load_asset(request, pk)
+    page = Paginator(history_of("Asset", asset.pk), 50).get_page(request.GET.get("page"))
+    return render(request, "assets/asset_history.html", {"asset": asset, "page": page})
+
 
 
 @permission_required(Action.REGISTER_ASSET, record=_load_asset)
