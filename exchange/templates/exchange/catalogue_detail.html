@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ asset.name }} - Catalogue - Circular Campus{% endblock %}
+{% block nav_catalogue %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ asset.name }}</h1>
+    <div class="sub">{{ asset.owner_department.name }} · <span class="tag ok">Available</span></div>
+  </div>
+  <a class="btn" href="{% url 'exchange:catalogue' %}">Back to catalogue</a>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>About this item</h2>
+    <dl class="facts">
+      <dt>Category</dt><dd>{{ asset.category.name }}</dd>
+      <dt>Condition</dt><dd>{{ asset.get_condition_display }}</dd>
+      <dt>Description</dt><dd>{{ asset.description|default:"—" }}</dd>
+      <dt>Tags</dt><dd>{% for tag in asset.tags %}<span class="tag">{{ tag }}</span>{% empty %}—{% endfor %}</dd>
+      <dt>Age</dt><dd>{% if asset.asset_age_years is not None %}{{ asset.asset_age_years }} years{% else %}Unknown{% endif %}</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <h2>Where it is</h2>
+    <dl class="facts">
+      <dt>Owner</dt><dd>{{ asset.owner_department.name }}</dd>
+      <dt>Campus</dt><dd>{{ asset.campus|default:"—" }}</dd>
+      <dt>Building / room</dt><dd>{{ asset.building|default:"—" }}{% if asset.room %}, room {{ asset.room }}{% endif %}</dd>
+    </dl>
+    {% block request_action %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

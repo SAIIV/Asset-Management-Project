@@ -17,7 +17,15 @@
     {% else %}
       <a class="btn primary" href="{% url 'assets:edit' asset.pk %}">Edit</a>
     {% endif %}
+    {% if asset.is_listed %}
+      <form method="post" action="{% url 'exchange:unpublish' asset.pk %}" class="inline-form">{% csrf_token %}
+        <button type="submit" class="btn">Remove from catalogue</button></form>
+    {% elif asset.status == "Available" %}
+      <form method="post" action="{% url 'exchange:publish' asset.pk %}" class="inline-form">{% csrf_token %}
+        <button type="submit" class="btn primary">Publish to catalogue</button></form>
+    {% endif %}
     <a class="btn" href="{% url 'assets:list' %}">Back to list</a>
+
   </div>
 </div>
 
