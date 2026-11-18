@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Inbox - Circular Campus{% endblock %}
+{% block nav_inbox %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Inbox</h1>
+    <div class="sub">Messages about your requests, approvals and transfers. Only you can see your inbox.</div>
+  </div>
+  {% if unread_count %}
+  <form method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}
+    <button type="submit" class="btn">Mark all as read</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="toolbar">
+  <a class="btn{% if show != 'unread' %} primary{% endif %}" href="{% url 'notifications:inbox' %}">All</a>
+  <a class="btn{% if show == 'unread' %} primary{% endif %}" href="?show=unread">Unread ({{ unread_count }})</a>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th></th><th>Message</th><th>About</th><th>Received</th><th></th></tr></thead>
+    <tbody>
+      {% for note in page %}
+      <tr>
+        <td>{% if not note.read_at %}<span class="tag ai">New</span>{% endif %}</td>
+        <td>{% if not note.read_at %}<strong>{{ note.message }}</strong>{% else %}{{ note.message }}{% endif %}</td>
+        <td>{{ note.linked_record|default:"—" }}</td>
+        <td>{{ note.created_at|date:"j M Y, H:i" }}</td>
+        <td>
+          <form method="post" action="{% url 'notifications:open' note.pk %}">{% csrf_token %}
+            <button type="submit" class="btn">{% if note.link %}Open{% else %}Mark read{% endif %}</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No messages{% if show == 'unread' %} left to read{% endif %}.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a class="btn" href="?show={{ show }}&page={{ page.previous_page_number }}">Newer</a>{% endif %}
+  <span class="kpi">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?show={{ show }}&page={{ page.next_page_number }}">Older</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

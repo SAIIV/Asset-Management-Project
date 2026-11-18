@@ -42,7 +42,8 @@
       <a href="#" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>
       <a href="#" class="{% block nav_reports %}{% endblock %}">Reports</a>
       <a href="#" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>
-      <a href="#" class="{% block nav_inbox %}{% endblock %}">Inbox</a>
+      <a href="{% if user.is_authenticated %}{% url 'notifications:inbox' %}{% else %}#{% endif %}" class="{% block nav_inbox %}{% endblock %}">Inbox{% if unread_count %} <span class="tag ai">{{ unread_count }}</span>{% endif %}</a>
+
     </nav>
     {% endblock %}
 
