@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Request #{{ req.pk }} - Circular Campus{% endblock %}
+{% block nav_requests %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Request #{{ req.pk }} from {{ req.requester.department.name|default:"—" }}</h1>
+    <div class="sub"><span class="tag">{{ req.get_status_display }}</span> {{ req.get_type_display }} · {{ needed }} of {{ req.quantity }} unit(s) still needed · required by {{ req.required_by }}</div>
+  </div>
+  <a class="btn" href="{% url 'transfers:incoming' %}">Incoming requests</a>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>What they need</h2>
+    <dl class="facts">
+      <dt>Purpose</dt><dd>{{ spec.purpose|default:"—" }}</dd>
+      <dt>Specifications</dt><dd>{% for s in spec.mandatory_specs %}<span class="tag">{{ s }}</span>{% empty %}—{% endfor %}</dd>
+      <dt>Preferred condition</dt><dd>{{ spec.get_preferred_condition_display|default:"Any" }}</dd>
+      <dt>Items they chose</dt><dd>{% for a in candidates %}<span class="tag">{{ a.name }} ({{ a.owner_department.name }})</span>{% empty %}None{% endfor %}</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <h2>Reserved so far</h2>
+    <ul class="can-list">
+      {% for r in reservations %}<li>{{ r.asset.name }} · {{ r.asset.owner_department.name }}</li>{% empty %}<li>Nothing reserved yet.</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% if can_reserve and needed %}
+<form method="post" class="card">
+  {% csrf_token %}
+  <h2>Reserve units of {{ user.department.name }}</h2>
+  <p class="help">Only Available units are listed. Units are reserved together or not at all; if one was taken meanwhile, nothing is reserved and the list refreshes.</p>
+  <table>
+    <thead><tr><th></th><th>Asset</th><th>Category</th><th>Condition</th><th>Listed</th></tr></thead>
+    <tbody>
+      {% for a in units %}
+      <tr>
+        <td><input type="checkbox" name="assets" value="{{ a.pk }}" id="u{{ a.pk }}"{% if a.pk in chosen %} checked{% endif %}></td>
+        <td><label for="u{{ a.pk }}">#{{ a.pk }} {{ a.name }}</label>{% if a.pk in chosen %} <span class="tag ok">Chosen by requester</span>{% endif %}</td>
+        <td>{{ a.category.name }}</td>
+        <td>{{ a.get_condition_display }}</td>
+        <td>{% if a.is_listed %}Yes{% else %}No{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">Your department has no Available units.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="form-actions"><button type="submit" class="btn primary">Reserve selected units</button></div>
+</form>
+{% endif %}
+{% endblock %}

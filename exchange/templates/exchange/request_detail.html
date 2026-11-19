@@ -48,8 +48,44 @@
   </div>
 </div>
 
+{% if transfers %}
+<div class="card">
+  <h2>Deliveries</h2>
+  <p class="help">Confirm each item when it arrives. Ownership moves to your department only when you confirm (BR-07).
+    If something is wrong, choose "Problem": the previous owner keeps custody until it is resolved.</p>
+  <table>
+    <thead><tr><th>Item</th><th>From</th><th>Status</th><th>Your answer</th></tr></thead>
+    <tbody>
+      {% for t in transfers %}
+      <tr>
+        <td>{{ t.asset.name }}</td>
+        <td>{{ t.asset.owner_department.name }}</td>
+        <td><span class="tag{% if t.status == 'Received' %} ok{% elif t.status == 'Disputed' %} bad{% endif %}">{{ t.get_status_display }}</span></td>
+        <td>
+          {% if t.status == "Dispatched" or t.status == "Disputed" %}
+          <form method="post" action="{% url 'transfers:receive' t.pk %}" class="toolbar">{% csrf_token %}
+            <select name="condition" aria-label="Condition on arrival">
+              {% for value, label in conditions %}<option value="{{ value }}"{% if value == t.asset.condition %} selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+            <select name="outcome" aria-label="Outcome">
+              <option value="ok">{% if t.status == "Disputed" %}Resolved, received{% else %}All good, received{% endif %}</option>
+              {% if t.status == "Dispatched" %}<option value="problem">Problem (mismatch or damage)</option>{% endif %}
+            </select>
+            <input type="text" name="note" placeholder="Note (optional)" maxlength="300">
+            <button type="submit" class="btn primary">Confirm</button>
+          </form>
+          {% elif t.status == "Received" %}Received {{ t.received_at|date:"j M Y, H:i" }}{% else %}Waiting for release{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 <div class="card">
   <h2>History</h2>
+
   {% include "assets/_history_rows.html" with events=history %}
 </div>
 

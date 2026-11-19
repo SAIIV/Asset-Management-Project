@@ -147,6 +147,9 @@ def request_detail(request, pk):
         "spec": getattr(obj, "specification", None),
         "candidates": candidates_of(obj),
         "reservations": obj.reservations.select_related("asset"),
+        "transfers": obj.transfers.select_related("asset", "asset__owner_department"),
+        "conditions": Condition.choices,
+
         "history": history_of("ResourceRequest", obj.pk),
         "can_revise": obj.status in REVISABLE,
         "can_cancel": obj.status in CANCELLABLE,

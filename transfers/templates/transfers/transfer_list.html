@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Transfers - Circular Campus{% endblock %}
+{% block nav_transfers %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Transfers</h1>
+    <div class="sub">Items your department sends or receives. Custody only moves when the receiver confirms (BR-07).</div>
+  </div>
+  {% if "reserve_units" in allowed %}<a class="btn" href="{% url 'transfers:incoming' %}">Incoming requests</a>{% endif %}
+</div>
+<div class="card">
+  {% include "transfers/_transfer_rows.html" %}
+</div>
+{% endblock %}

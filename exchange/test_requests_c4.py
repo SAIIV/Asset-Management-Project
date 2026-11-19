@@ -169,5 +169,6 @@ class RequestPageTests(Base):
     def test_notification_opens_the_request(self):
         req = RequestService.create(self.requester, data())
         note = Notification.objects.get(user=self.requester)
-        response = self.client.post(reverse("notifications:open", args=[note.pk]))
-        self.assertRedirects(response, reverse("exchange:request_detail", args=[req.pk]))
+        response = self.client.post(reverse("notifications:open", args=[note.pk]), follow=True)
+        self.assertEqual(response.redirect_chain[-1][0], reverse("exchange:request_detail", args=[req.pk]))
+

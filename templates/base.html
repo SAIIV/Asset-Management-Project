@@ -36,12 +36,13 @@
       <a href="{% url 'home' %}" class="{% block nav_dashboard %}{% endblock %}">Dashboard</a>
       <a href="{% if 'register_asset' in allowed %}{% url 'assets:list' %}{% else %}#{% endif %}" class="{% block nav_assets %}{% endblock %}">Assets</a>
       <a href="{% if 'search_assets' in allowed %}{% url 'exchange:catalogue' %}{% else %}#{% endif %}" class="{% block nav_catalogue %}{% endblock %}">Catalogue</a>
-      <a href="{% if 'submit_request' in allowed %}{% url 'exchange:requests' %}{% else %}#{% endif %}" class="{% block nav_requests %}{% endblock %}">Requests</a>
+      <a href="{% if 'submit_request' in allowed %}{% url 'exchange:requests' %}{% elif 'reserve_units' in allowed %}{% url 'transfers:incoming' %}{% else %}#{% endif %}" class="{% block nav_requests %}{% endblock %}">Requests</a>
 
 
       <a href="#" class="{% block nav_matches %}{% endblock %}">Matches</a>
-      <a href="#" class="{% block nav_transfers %}{% endblock %}">Transfers</a>
-      <a href="#" class="{% block nav_approvals %}{% endblock %}">Approvals</a>
+      <a href="{% if 'release_units' in allowed or 'confirm_receipt' in allowed %}{% url 'transfers:list' %}{% else %}#{% endif %}" class="{% block nav_transfers %}{% endblock %}">Transfers</a>
+      <a href="{% if 'approve_request' in allowed %}{% url 'transfers:approvals' %}{% else %}#{% endif %}" class="{% block nav_approvals %}{% endblock %}">Approvals</a>
+
       <a href="#" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>
       <a href="#" class="{% block nav_reports %}{% endblock %}">Reports</a>
       <a href="#" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>
