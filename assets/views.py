@@ -46,6 +46,8 @@ def asset_create(request):
     """UC-04 Register an asset."""
     if request.user.department_id is None:
         raise PermissionDenied
+    if request.method == "POST" and "suggest" in request.POST:
+        return _suggest_category(request)
     form = AssetForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         try:
@@ -53,9 +55,38 @@ def asset_create(request):
         except AssetEditError as error:
             form.add_error(None, str(error))
         else:
+            if form.cleaned_data.get("ai_record"):
+                from ai.classify import answer
+                answer(form.cleaned_data["ai_record"], asset.category_id)  # Accepted or Corrected (Section 13)
             messages.success(request, f"Asset #{asset.pk} “{asset.name}” was registered.")
             return redirect("assets:detail", pk=asset.pk)
     return render(request, "assets/asset_form.html", {"form": form, "editing": False})
+
+
+def _suggest_category(request):
+    """AI #1 (Mockup M1): suggest a category from the name and description.
+
+    The form comes back with everything the custodian typed. A confident
+    category is preselected and empty tags/material are filled in; nothing is
+    saved until the custodian presses Register.
+    """
+    from ai.classify import classify_asset
+
+    typed = request.POST.dict()
+    typed.pop("csrfmiddlewaretoken", None)
+    typed.pop("suggest", None)
+    suggestion = classify_asset(typed.get("name", "").strip(), typed.get("description", "").strip())
+    if suggestion.category is not None:
+        typed["category"] = suggestion.category.pk
+    if suggestion.tags and not typed.get("tags_text", "").strip():
+        typed["tags_text"] = ", ".join(suggestion.tags)
+    if suggestion.material and not typed.get("material", "").strip():
+        typed["material"] = suggestion.material
+    if not suggestion.fallback:
+        typed["ai_record"] = suggestion.record_id
+    form = AssetForm(initial=typed)
+    return render(request, "assets/asset_form.html", {"form": form, "editing": False, "suggestion": suggestion})
+
 
 
 @permission_required(Action.REGISTER_ASSET, record=_load_asset)

@@ -41,6 +41,8 @@ class AssetForm(forms.ModelForm):
     )
     material = forms.CharField(label="Material (furniture)", required=False, max_length=80)
     version = forms.IntegerField(widget=forms.HiddenInput, required=False)
+    # AI #1: the AIRecord of the suggestion shown, so Register can store Accepted or Corrected.
+    ai_record = forms.IntegerField(widget=forms.HiddenInput, required=False)
 
     class Meta:
         model = Asset
@@ -63,7 +65,8 @@ class AssetForm(forms.ModelForm):
         """kind/details are given when editing: the type is then fixed."""
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = Category.objects.order_by("name")
-        self.fields["category"].help_text = "The AI suggestion arrives with AI #1; for now choose from the list."
+        self.fields["category"].help_text = "Choose from the list, or press Suggest category for an AI suggestion."
+
         self.editing = self.instance.pk is not None
         if self.editing:
             del self.fields["status"]  # status changes belong to C5/C6, not this form

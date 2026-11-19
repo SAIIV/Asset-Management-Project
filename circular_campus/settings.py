@@ -148,3 +148,10 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"          # uploaded photos/PDFs, git-ignored
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# --- AI gateway (Design Document 3.3) ---------------------------------------
+# Local embeddings for AI #1 and #2 (AD-3); "off" shows the fallback screens instead.
+AI_EMBEDDINGS = env("AI_EMBEDDINGS", "minilm")
+# Text-generation provider for AI #5 (AD-2). "off" until the group decides which one to use.
+AI_TEXT_PROVIDER = env("AI_TEXT_PROVIDER", "off")
