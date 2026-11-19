@@ -14,12 +14,41 @@
   <div class="card form-error">{% for error in form.non_field_errors %}{{ error }} {% endfor %}</div>
 {% endif %}
 
-{# Mockup M1: the AI suggestion panel. AI #1 (Humaid) fills it later; until then this is the "AI down" state. #}
-<div class="down">AI category suggestion is not connected yet. Choose the category from the list; nothing is filled in automatically.</div>
+{# Mockup M1: the AI #1 suggestion panel. It is only a suggestion; nothing is saved until Register is pressed. #}
+{% if suggestion %}
+  {% if suggestion.fallback %}
+  <div class="down">{{ suggestion.message }} Choose the category from the list; what you typed is kept.</div>
+  {% else %}
+  <div class="card ai">
+    <span class="tag ai">AI suggestion</span>
+    {% if suggestion.unsure %}
+      <b>Low confidence, please choose.</b> No category was preselected.
+    {% else %}
+      Suggested category: <b>{{ suggestion.category.name }}</b>. It is selected below and you can change it.
+    {% endif %}
+    <table>
+      <thead><tr><th>Closest categories</th><th>Similarity</th></tr></thead>
+      <tbody>
+        {% for category, similarity in suggestion.ranked %}
+        <tr><td>{{ category.name }}</td><td>{{ similarity|floatformat:2 }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if suggestion.tags or suggestion.material %}
+    <p class="kpi">Filled in only where you left the field empty:
+      {% if suggestion.tags %}tags {{ suggestion.tags|join:", " }}{% endif %}{% if suggestion.tags and suggestion.material %}; {% endif %}{% if suggestion.material %}material {{ suggestion.material }}{% endif %}.</p>
+    {% endif %}
+    <p class="kpi">Similarity of the name and description to each category, from the local all-MiniLM-L6-v2 model. It is not a probability. Below 0.60, or less than 0.10 ahead of the next category, counts as low confidence.</p>
+  </div>
+  {% endif %}
+{% elif not editing %}
+  <p class="kpi">Type the name and a short description, then press <b>Suggest category</b> to get an AI suggestion. You can also just choose from the list.</p>
+{% endif %}
 
 <form method="post" class="card asset-form" novalidate>
   {% csrf_token %}
   {{ form.version }}
+  {{ form.ai_record }}
 
   <h2>What it is</h2>
   <div class="grid">
@@ -31,6 +60,8 @@
     {% include "assets/_field.html" with field=form.tags_text %}
   </div>
   {% include "assets/_field.html" with field=form.description %}
+  {% if not editing %}<button type="submit" name="suggest" value="1" class="btn">Suggest category</button>{% endif %}
+
 
   <h2>Type details</h2>
   <div class="grid">

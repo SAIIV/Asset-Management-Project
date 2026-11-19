@@ -6,5 +6,7 @@ psycopg[binary]>=3.2,<4     # PostgreSQL driver used by Django
 pgvector>=0.4,<0.6          # VectorField for embeddings (pgvector extension)
 python-dotenv>=1.0,<2       # reads settings and secrets from the .env file
 
-# AI libraries (openai, sentence-transformers) are added by the AI gateway owner
-# in their own feature branch, so this setup stays small.
+# AI #1 and #2: local all-MiniLM-L6-v2 embeddings (AD-3). Also installs PyTorch (CPU).
+# The model itself (about 90 MB) is downloaded once, the first time it is used.
+sentence-transformers>=3.0,<6
+# The text-generation library (AI #5) is added once the provider is decided (AD-2).
