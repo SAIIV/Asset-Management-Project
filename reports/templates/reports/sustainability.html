@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Sustainability - Circular Campus{% endblock %}
+{% block nav_sustainability %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Sustainability dashboard</h1>
+    <div class="sub">UC-28 View sustainability impact · all departments · counted only for received permanent transfers</div>
+  </div>
+</div>
+
+<form method="get" class="card toolbar">
+  <label>From <input type="date" name="start" value="{{ start|date:'Y-m-d' }}"></label>
+  <label>To <input type="date" name="end" value="{{ end|date:'Y-m-d' }}"></label>
+  <button type="submit" class="btn primary">Show</button>
+  {% if start or end %}<a class="btn" href="{% url 'reports:sustainability' %}">All time</a>{% endif %}
+</form>
+{% if error %}<div class="card form-error">{{ error }}</div>{% endif %}
+
+{% if f %}
+<div class="grid">
+  <div class="card">
+    <div class="kpi">Items reused</div>
+    <div class="num">{{ f.reuse_count }}</div>
+    <div class="kpi">Count of transfers with status Received and type Permanent in the period. Loans are not counted.</div>
+  </div>
+  <div class="card">
+    <div class="kpi">Reuse rate</div>
+    <div class="num">{% if f.reuse_rate is not None %}{{ f.reuse_rate }}%{% else %}—{% endif %}</div>
+    <div class="kpi">Published items that were then reused ÷ items published in the period ({{ f.published_assets }}) × 100.</div>
+  </div>
+  <div class="card">
+    <div class="kpi">Avoided purchase cost</div>
+    <div class="num">{% if f.avoided_aed is not None %}AED {{ f.avoided_aed|floatformat:2 }}{% else %}—{% endif %}</div>
+    <div class="kpi">Σ (replacement baseline − transfer cost). Baseline = the item's estimated value; transfer cost is 0 in Prototype 1.</div>
+  </div>
+  <div class="card">
+    <div class="kpi">Mass diverted from disposal</div>
+    <div class="num">{% if f.diverted_kg is not None %}{{ f.diverted_kg|floatformat:1 }} kg{% else %}—{% endif %}</div>
+    <div class="kpi">Σ recorded mass (massKg) of reused items. Recorded, not weighed again.</div>
+  </div>
+  <div class="card">
+    <div class="kpi">Avoided emissions</div>
+    <div class="num">{% if f.co2e_kg is not None %}{{ f.co2e_kg|floatformat:1 }} kg CO2e{% else %}Unavailable{% endif %}</div>
+    <div class="kpi">Σ (massKg ÷ 907.185) × WARM factor (MTCO2E per short ton) × 1000, factors from {{ f.warm_version }}.</div>
+  </div>
+  <div class="card">
+    <div class="kpi">Missing data</div>
+    <ul class="can-list">
+      <li>{{ f.no_baseline }} reused item{{ f.no_baseline|pluralize }} without an estimated value (no cost counted)</li>
+      <li>{{ f.no_mass }} without a recorded mass (no mass or CO2e counted)</li>
+      <li>{{ f.no_co2e }} without a CO2e figure (no mass or no WARM factor for its category)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Reuse by category</h2>
+  {% for name, n, pct in f.by_category %}
+  <div class="bar-row"><span style="width:140px">{{ name }}</span><div class="bar"><i style="width:{{ pct }}%"></i></div><span>{{ n }}</span></div>
+  {% empty %}
+  <p class="kpi">No received permanent transfers in this period.</p>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>Counted events</h2>
+  <table>
+    <thead><tr><th>Transfer</th><th>Item</th><th>Received by</th><th>Received</th><th>Avoided AED</th><th>Mass kg</th><th>kg CO2e</th><th>Factor</th></tr></thead>
+    <tbody>
+      {% for i in f.impacts %}
+      <tr>
+        <td>T-{{ i.transfer.pk|stringformat:"04d" }}</td>
+        <td>{{ i.transfer.asset.name }}</td>
+        <td>{{ i.transfer.request.requester.department.name|default:"—" }}</td>
+        <td>{{ i.transfer.received_at|date:"Y-m-d" }}</td>
+        <td>{{ i.avoided_cost_aed|floatformat:2 }}</td>
+        <td>{{ i.diverted_mass_kg|floatformat:1|default:"—" }}</td>
+        <td>{{ i.co2e_kg|floatformat:1|default:"—" }}</td>
+        <td class="kpi">{{ i.factor_ref }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8">No counted events in this period.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="kpi">Prototype 1 figures use synthetic values and are not finance-validated.</p>
+</div>
+{% endif %}
+
+{# Mockup 6: AI #5 writes a short narrative of these figures later. Until then: the "AI down" state. #}
+<div class="down">Narrative unavailable: the AI summary is not connected yet. All figures above are calculated without AI (P3-XR-08).</div>
+{% endblock %}

@@ -46,7 +46,7 @@
       <a href="#" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>
       <a href="{% if 'run_reports' in allowed %}{% url 'reports:operational' %}{% else %}#{% endif %}" class="{% block nav_reports %}{% endblock %}">Reports</a>
 
-      <a href="#" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>
+      <a href="{% if 'view_sustainability' in allowed %}{% url 'reports:sustainability' %}{% else %}#{% endif %}" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>
       <a href="{% if user.is_authenticated %}{% url 'notifications:inbox' %}{% else %}#{% endif %}" class="{% block nav_inbox %}{% endblock %}">Inbox{% if unread_count %} <span class="tag ai">{{ unread_count }}</span>{% endif %}</a>
 
     </nav>

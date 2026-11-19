@@ -57,3 +57,19 @@ def operational(request):
         "count": len(rows), "totals": totals(rows), "start": start, "end": end, "error": error,
         "csv_query": query.urlencode(),
     })
+
+
+@permission_required(Action.VIEW_SUSTAINABILITY)
+def sustainability(request):
+    """C7 Sustainability dashboard (UC-28, Mockup 6).
+
+    Until the Sustainability Officer role exists, the Administrator sees it (Section 3.4).
+    """
+    from .sustainability import dashboard, sync_impacts
+
+    start, end = _date(request.GET.get("start", "")), _date(request.GET.get("end", ""))
+    error = "The start date is after the end date." if start and end and start > end else ""
+    sync_impacts()  # store the impact of any transfer received since the last visit
+    figures = {} if error else dashboard(start, end)
+    return render(request, "reports/sustainability.html",
+                  {"f": figures, "start": start, "end": end, "error": error})
