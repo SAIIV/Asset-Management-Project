@@ -12,6 +12,8 @@ urlpatterns = [
     path("inbox/", include("notifications.urls")),
     path("", include("exchange.urls")),
     path("transfers/", include("transfers.urls")),
+    path("reports/", include("reports.urls")),
+
 
 
 

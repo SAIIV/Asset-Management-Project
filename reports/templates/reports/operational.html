@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Operational report - Circular Campus{% endblock %}
+{% block nav_reports %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Operational report</h1>
+    <div class="sub">UC-26 Generate an operational report · {{ user.department.name|default:"no department" }}</div>
+  </div>
+</div>
+
+<form method="get" class="card toolbar">
+  <label>Report
+    <select name="report">
+      {% for key, label in reports %}<option value="{{ key }}"{% if key == report %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>From <input type="date" name="start" value="{{ start|date:'Y-m-d' }}"></label>
+  <label>To <input type="date" name="end" value="{{ end|date:'Y-m-d' }}"></label>
+  <button type="submit" class="btn primary">Run</button>
+  <a class="btn" href="?{{ csv_query }}&format=csv">Export CSV</a>
+</form>
+{% if error %}<div class="card form-error">{{ error }}</div>{% endif %}
+<p class="kpi">
+  {% if report == "transfers" %}Transfers that left or reached your department; the period filters by release date.
+  {% else %}Requests made by your department; the period filters by the required-by date.{% endif %}
+</p>
+
+<div class="card">
+  <table>
+    <thead><tr>{% for key, label in columns %}<th>{{ label }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>{% for cell in row %}<td>{% if forloop.last %}<span class="tag{% if cell == 'Received' or cell == 'Fulfilled' %} ok{% elif cell == 'Disputed' or cell == 'Rejected' or cell == 'Cancelled' %} bad{% endif %}">{{ cell }}</span>{% else %}{{ cell|default:"—" }}{% endif %}</td>{% endfor %}</tr>
+      {% empty %}
+      <tr><td colspan="{{ columns|length }}">No {{ title|lower }} in this period.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="kpi">{{ count }} row{{ count|pluralize }}{% for status, n in totals %} · {{ status }}: {{ n }}{% endfor %}</p>
+</div>
+
+{# Mockup 7: AI #5 writes a short draft summary of this table later. Until then: the "AI down" state. #}
+<div class="down">Summary unavailable: the AI activity summary is not connected yet. The table, totals and CSV export work as normal (P3-XR-08).</div>
+{% endblock %}
