@@ -6,4 +6,5 @@ app_name = "reports"
 
 urlpatterns = [
     path("", views.operational, name="operational"),
+    path("sustainability/", views.sustainability, name="sustainability"),
 ]
