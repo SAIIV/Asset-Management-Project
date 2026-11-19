@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My requests - Circular Campus{% endblock %}
+{% block nav_requests %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>My requests</h1>
+    <div class="sub">Everything you asked for and where it is now.</div>
+  </div>
+  <a class="btn primary" href="{% url 'exchange:request_create' %}">New request</a>
+</div>
+
+<form method="get" class="toolbar">
+  <select name="status" aria-label="Status">
+    <option value="">All statuses</option>
+    {% for value, label in statuses %}<option value="{{ value }}"{% if value == status %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <button type="submit" class="btn">Filter</button>
+  {% if status %}<a href="{% url 'exchange:requests' %}">Clear</a>{% endif %}
+</form>
+
+<div class="card">
+  <table>
+    <thead><tr><th>ID</th><th>Purpose</th><th>Quantity</th><th>Required by</th><th>Urgency</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for req in page %}
+      <tr>
+        <td><a href="{% url 'exchange:request_detail' req.pk %}">#{{ req.pk }}</a></td>
+        <td>{{ req.specification.purpose|truncatechars:70 }}</td>
+        <td>{{ req.quantity }}</td>
+        <td>{{ req.required_by }}</td>
+        <td>{{ req.get_urgency_display }}</td>
+        <td><span class="tag{% if req.status == 'Approved' or req.status == 'Fulfilled' %} ok{% elif req.status == 'Rejected' or req.status == 'Cancelled' %} bad{% endif %}">{{ req.get_status_display }}</span></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No requests yet. Find an item in the <a href="{% url 'exchange:catalogue' %}">catalogue</a> or make a new request.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a class="btn" href="?status={{ status }}&page={{ page.previous_page_number }}">Previous</a>{% endif %}
+  <span class="kpi">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?status={{ status }}&page={{ page.next_page_number }}">Next</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

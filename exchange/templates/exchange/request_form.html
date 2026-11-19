@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Change request #{{ req.pk }}{% else %}New request{% endif %} - Circular Campus{% endblock %}
+{% block nav_requests %}on{% endblock %}
+{% block content %}
+{% if editing %}
+  <h1>Change request #{{ req.pk }}</h1>
+  <div class="sub">UC-11 Revise a pending request · status {{ req.get_status_display }}</div>
+{% else %}
+  <h1>Submit a resource request</h1>
+  <div class="sub">UC-10 Submit a resource request · for {{ user.department.name }}. Fields marked * are required.</div>
+{% endif %}
+
+{% if form.non_field_errors %}
+  <div class="card form-error">{% for error in form.non_field_errors %}{{ error }} {% endfor %}</div>
+{% endif %}
+
+<form method="post" class="card asset-form" novalidate>
+  {% csrf_token %}
+  {% include "assets/_field.html" with field=form.purpose %}
+  <div class="grid">
+    {% include "assets/_field.html" with field=form.quantity %}
+    {% include "assets/_field.html" with field=form.required_by %}
+    {% include "assets/_field.html" with field=form.urgency %}
+    {% include "assets/_field.html" with field=form.type %}
+    {% include "assets/_field.html" with field=form.mandatory_specs_text %}
+    {% include "assets/_field.html" with field=form.preferred_condition %}
+  </div>
+  {# Mockup 2 shows AI-ranked matches here; AI #2 (Ali) adds them later. Until then the requester picks from the catalogue. #}
+  <div class="down">Ranked matches are not connected yet. Pick candidates from the catalogue list below, or leave it empty.</div>
+  {% include "assets/_field.html" with field=form.candidates %}
+  <div class="form-actions">
+    {% if editing %}
+      <button type="submit" class="btn primary">Save changes</button>
+      <a class="btn" href="{% url 'exchange:request_detail' req.pk %}">Back</a>
+    {% else %}
+      <button type="submit" name="save_draft" value="1" class="btn">Save as draft</button>
+      <button type="submit" name="submit" value="1" class="btn primary">Submit request</button>
+    {% endif %}
+  </div>
+  <p class="help">"Required by" cannot be in the past. Your entries are kept when an error is shown.</p>
+</form>
+{% endblock %}
