@@ -18,6 +18,8 @@ from .models import Notification
 #: Each feature adds its own page here when it exists (C4 adds ResourceRequest, C5 adds Transfer).
 RECORD_PAGES = {
     "Asset": "assets:detail",
+    "ResourceRequest": "exchange:request_detail",
+
 }
 
 

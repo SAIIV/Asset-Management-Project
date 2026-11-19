@@ -28,7 +28,10 @@
       <dt>Campus</dt><dd>{{ asset.campus|default:"—" }}</dd>
       <dt>Building / room</dt><dd>{{ asset.building|default:"—" }}{% if asset.room %}, room {{ asset.room }}{% endif %}</dd>
     </dl>
-    {% block request_action %}{% endblock %}
+    {% if "submit_request" in allowed and asset.owner_department_id != user.department_id %}
+      <p><a class="btn primary" href="{% url 'exchange:request_create' %}?asset={{ asset.pk }}">Request this item</a></p>
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}

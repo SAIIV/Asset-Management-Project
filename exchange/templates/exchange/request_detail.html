@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Request #{{ req.pk }} - Circular Campus{% endblock %}
+{% block nav_requests %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Request #{{ req.pk }}</h1>
+    <div class="sub">
+      <span class="tag{% if req.status == 'Approved' or req.status == 'Fulfilled' %} ok{% elif req.status == 'Rejected' or req.status == 'Cancelled' %} bad{% endif %}">{{ req.get_status_display }}</span>
+      {{ req.get_type_display }} · version {{ req.version }}
+    </div>
+  </div>
+  <div>
+    {% if is_draft %}
+      <form method="post" action="{% url 'exchange:request_submit' req.pk %}" class="inline-form">{% csrf_token %}
+        <button type="submit" class="btn primary">Submit request</button></form>
+    {% endif %}
+    {% if can_revise %}<a class="btn" href="{% url 'exchange:request_edit' req.pk %}">Change</a>{% endif %}
+    <a class="btn" href="{% url 'exchange:requests' %}">My requests</a>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>What you asked for</h2>
+    <dl class="facts">
+      <dt>Purpose</dt><dd>{{ spec.purpose|default:"—" }}</dd>
+      <dt>Quantity</dt><dd>{{ req.quantity }}</dd>
+      <dt>Required by</dt><dd>{{ req.required_by }}</dd>
+      <dt>Urgency</dt><dd>{{ req.get_urgency_display }}</dd>
+      <dt>Specifications</dt><dd>{% for s in spec.mandatory_specs %}<span class="tag">{{ s }}</span>{% empty %}—{% endfor %}</dd>
+      <dt>Preferred condition</dt><dd>{{ spec.get_preferred_condition_display|default:"Any" }}</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <h2>Candidate assets</h2>
+    <table>
+      <thead><tr><th>Item</th><th>Department</th><th>Reserved?</th></tr></thead>
+      <tbody>
+        {% for asset in candidates %}
+        <tr><td>{{ asset.name }}</td><td>{{ asset.owner_department.name }}</td>
+          <td>{% for r in reservations %}{% if r.asset_id == asset.pk %}<span class="tag">{{ r.get_status_display }}</span>{% endif %}{% endfor %}</td></tr>
+        {% empty %}
+        <tr><td colspan="3">None chosen. The custodians can still offer matching items.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>History</h2>
+  {% include "assets/_history_rows.html" with events=history %}
+</div>
+
+{% if can_cancel %}
+<div class="card">
+  <h2>Cancel this request</h2>
+  <form method="post" action="{% url 'exchange:request_cancel' req.pk %}" class="asset-form">{% csrf_token %}
+    <div class="field"><label for="id_reason">Reason (optional)</label>
+      <input type="text" name="reason" id="id_reason" maxlength="300"></div>
+    <div class="form-actions"><button type="submit" class="btn">Cancel request</button></div>
+  </form>
+  <p class="help">Any reserved items are released and become available to others again. After dispatch a request cannot be cancelled.</p>
+</div>
+{% endif %}
+{% endblock %}
