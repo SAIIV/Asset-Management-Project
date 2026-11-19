@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Incoming requests - Circular Campus{% endblock %}
+{% block nav_requests %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Incoming requests</h1>
+    <div class="sub">Requests from other departments waiting for units. Reserve units of {{ user.department.name }} to send them for approval (UC-13).</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Waiting for units</h2>
+  <table>
+    <thead><tr><th>Request</th><th>From</th><th>Purpose</th><th>Still needed</th><th>Required by</th><th>Your items asked for</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><a href="{% url 'transfers:custodian_request' row.req.pk %}">#{{ row.req.pk }}</a></td>
+        <td>{{ row.req.requester.department.name|default:"—" }}</td>
+        <td>{{ row.req.specification.purpose|truncatechars:60 }}</td>
+        <td>{{ row.needed }} of {{ row.req.quantity }}</td>
+        <td>{{ row.req.required_by }}{% if row.req.urgency == "High" %} <span class="tag warn">Urgent</span>{% endif %}</td>
+        <td>{% for a in row.mine %}<span class="tag ok">{{ a.name }}</span>{% empty %}—{% endfor %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No requests are waiting for units.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Approved, to release</h2>
+  {% include "transfers/_transfer_rows.html" with transfers=to_release %}
+</div>
+{% endblock %}

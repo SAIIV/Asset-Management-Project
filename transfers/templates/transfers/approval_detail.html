@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Approve request #{{ req.pk }} - Circular Campus{% endblock %}
+{% block nav_approvals %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Request #{{ req.pk }}</h1>
+    <div class="sub">UC-14 Approve a request · <span class="tag">{{ req.get_status_display }}</span> · from {{ req.requester.name }}, {{ req.requester.department.name|default:"—" }}</div>
+  </div>
+  <a class="btn" href="{% url 'transfers:approvals' %}">Approvals</a>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Request</h2>
+    <dl class="facts">
+      <dt>Purpose</dt><dd>{{ spec.purpose|default:"—" }}</dd>
+      <dt>Type</dt><dd>{{ req.get_type_display }}</dd>
+      <dt>Quantity</dt><dd>{{ req.quantity }}</dd>
+      <dt>Required by</dt><dd>{{ req.required_by }} ({{ req.get_urgency_display }})</dd>
+      <dt>Specifications</dt><dd>{% for s in spec.mandatory_specs %}<span class="tag">{{ s }}</span>{% empty %}—{% endfor %}</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <h2>Reserved units</h2>
+    <table>
+      <thead><tr><th>Asset</th><th>From</th><th>Condition</th><th>Value</th></tr></thead>
+      <tbody>
+        {% for r in reservations %}
+        <tr><td>{{ r.asset.name }}</td><td>{{ r.asset.owner_department.name }}</td><td>{{ r.asset.get_condition_display }}</td>
+          <td>{% if r.asset.estimated_value_aed is not None %}AED {{ r.asset.estimated_value_aed }}{% else %}—{% endif %}</td></tr>
+        {% empty %}
+        <tr><td colspan="4">No active reservations.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if can_decide %}
+<form method="post" class="card asset-form">
+  {% csrf_token %}
+  <h2>Your decision</h2>
+  <div class="field">
+    {% for d in decisions %}
+      <label><input type="radio" name="decision" value="{{ d.value }}"{% if forloop.first %} checked{% endif %}> {{ d.label }}</label>
+    {% endfor %}
+  </div>
+  <div class="field">
+    <label for="id_reason">Reason (required to reject or return)</label>
+    <textarea name="reason" id="id_reason" rows="2" maxlength="1000"></textarea>
+  </div>
+  <div class="form-actions"><button type="submit" class="btn primary">Record decision</button></div>
+  <p class="help">Your decision, the reason and the time are kept in the audit log. Approving schedules one transfer per reserved unit.</p>
+</form>
+{% endif %}
+
+<div class="card">
+  <h2>History</h2>
+  {% include "assets/_history_rows.html" with events=history %}
+</div>
+{% endblock %}

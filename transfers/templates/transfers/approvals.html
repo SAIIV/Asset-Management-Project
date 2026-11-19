@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Approvals - Circular Campus{% endblock %}
+{% block nav_approvals %}on{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Approvals</h1>
+    <div class="sub">Requests with all units reserved. You never see your own requests here (BR-02: no self-approval).</div>
+  </div>
+</div>
+<div class="card">
+  <h2>Waiting for a decision</h2>
+  <table>
+    <thead><tr><th>Request</th><th>From</th><th>Purpose</th><th>Units</th><th>Required by</th></tr></thead>
+    <tbody>
+      {% for req in waiting %}
+      <tr>
+        <td><a href="{% url 'transfers:approval_detail' req.pk %}">#{{ req.pk }}</a></td>
+        <td>{{ req.requester.name }} · {{ req.requester.department.name|default:"—" }}</td>
+        <td>{{ req.specification.purpose|truncatechars:60 }}</td>
+        <td>{{ req.quantity }}</td>
+        <td>{{ req.required_by }}{% if req.urgency == "High" %} <span class="tag warn">Urgent</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">Nothing is waiting for you.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <h2>Your recent decisions</h2>
+  <table>
+    <thead><tr><th>Request</th><th>Decision</th><th>Reason</th><th>When</th></tr></thead>
+    <tbody>
+      {% for a in decided %}
+      <tr><td>#{{ a.request_id }}</td><td><span class="tag">{{ a.get_decision_display }}</span></td><td>{{ a.reason|default:"—" }}</td><td>{{ a.decided_at|date:"j M Y, H:i" }}</td></tr>
+      {% empty %}
+      <tr><td colspan="4">No decisions yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
