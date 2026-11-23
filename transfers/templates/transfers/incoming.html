@@ -12,7 +12,7 @@
 <div class="card">
   <h2>Waiting for units</h2>
   <table>
-    <thead><tr><th>Request</th><th>From</th><th>Purpose</th><th>Still needed</th><th>Required by</th><th>Your items asked for</th></tr></thead>
+    <thead><tr><th>Request</th><th>From</th><th>Purpose</th><th>Still needed</th><th>Required by</th><th>Your items asked for</th><th></th></tr></thead>
     <tbody>
       {% for row in rows %}
       <tr>
@@ -21,10 +21,13 @@
         <td>{{ row.req.specification.purpose|truncatechars:60 }}</td>
         <td>{{ row.needed }} of {{ row.req.quantity }}</td>
         <td>{{ row.req.required_by }}{% if row.req.urgency == "High" %} <span class="tag warn">Urgent</span>{% endif %}</td>
-        <td>{% for a in row.mine %}<span class="tag ok">{{ a.name }}</span>{% empty %}—{% endfor %}</td>
+        <td>{% for a in row.mine %}<span class="tag ok">{{ a.name }}</span>{% empty %}—{% endfor %}
+          {% if row.declined %}<span class="tag warn">You said: cannot supply</span>{% endif %}</td>
+        <td><a class="btn primary" href="{% url 'transfers:custodian_request' row.req.pk %}">Review</a></td>
       </tr>
       {% empty %}
-      <tr><td colspan="6">No requests are waiting for units.</td></tr>
+      <tr><td colspan="7">No requests are waiting for units.</td></tr>
+
       {% endfor %}
     </tbody>
   </table>

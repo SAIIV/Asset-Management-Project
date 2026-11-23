@@ -2,8 +2,9 @@
 
 from io import StringIO
 
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.management import call_command
+from django.db import IntegrityError, transaction
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -41,7 +42,22 @@ class SignInTests(TestCase):
                 self.assertContains(response, f'<span class="role">{role}</span>', html=False)
                 self.client.post(reverse("logout"))
 
+    def test_email_is_not_case_sensitive(self):
+        response = self.client.post(reverse("login"), {"username": "  Requester@Circular-Campus.EXAMPLE ",
+                                                       "password": PASSWORD}, follow=True)
+        self.assertRedirects(response, reverse("home"))
+
+    def test_same_email_in_other_case_is_one_account(self):
+        user = User.objects.create_user("New.Person@Example.com", PASSWORD, name="New Person")
+        self.assertEqual(user.email, "new.person@example.com")
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            User.objects.create_user("NEW.PERSON@example.com", PASSWORD, name="Copy")
+        copy = User(email="New.Person@EXAMPLE.com", name="Copy")
+        with self.assertRaises(ValidationError):
+            copy.clean()
+
     def test_wrong_password_gives_generic_message_and_is_audited(self):
+
         response = self.client.post(reverse("login"), {"username": SEEDED["Requester"], "password": "wrong"})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Please enter a correct email and password")

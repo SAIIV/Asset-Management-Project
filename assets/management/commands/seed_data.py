@@ -5,7 +5,7 @@
 Creates the 8 roles, 5 fictional departments, a small category tree, about 50
 synthetic assets (IT, lab and furniture) and 4 test users, one per Prototype 1
 role. Every record is invented and marked "synthetic", so no real staff or
-asset data is ever stored or sent to the OpenAI API (Phase 6 plan, Section 2).
+asset data is ever stored or sent to the Gemini API (Phase 6 plan, Section 2).
 
 Running it twice is safe: existing records are found and reused, not copied.
 """

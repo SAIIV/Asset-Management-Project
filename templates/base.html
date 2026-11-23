@@ -31,24 +31,18 @@
 
   <div class="main">
     {% block sidebar %}
-    {# Menu items of the mockups. Feature owners replace "#" with {% url %} when their page exists. #}
+    {# Menu items of the mockups. Each link is shown only to roles that may use it (the "allowed" actions). #}
     <nav class="side" aria-label="Main menu">
       <a href="{% url 'home' %}" class="{% block nav_dashboard %}{% endblock %}">Dashboard</a>
-      <a href="{% if 'register_asset' in allowed %}{% url 'assets:list' %}{% else %}#{% endif %}" class="{% block nav_assets %}{% endblock %}">Assets</a>
-      <a href="{% if 'search_assets' in allowed %}{% url 'exchange:catalogue' %}{% else %}#{% endif %}" class="{% block nav_catalogue %}{% endblock %}">Catalogue</a>
-      <a href="{% if 'submit_request' in allowed %}{% url 'exchange:requests' %}{% elif 'reserve_units' in allowed %}{% url 'transfers:incoming' %}{% else %}#{% endif %}" class="{% block nav_requests %}{% endblock %}">Requests</a>
-
-
-      <a href="#" class="{% block nav_matches %}{% endblock %}">Matches</a>
-      <a href="{% if 'release_units' in allowed or 'confirm_receipt' in allowed %}{% url 'transfers:list' %}{% else %}#{% endif %}" class="{% block nav_transfers %}{% endblock %}">Transfers</a>
-      <a href="{% if 'approve_request' in allowed %}{% url 'transfers:approvals' %}{% else %}#{% endif %}" class="{% block nav_approvals %}{% endblock %}">Approvals</a>
-
-      <a href="#" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>
-      <a href="{% if 'run_reports' in allowed %}{% url 'reports:operational' %}{% else %}#{% endif %}" class="{% block nav_reports %}{% endblock %}">Reports</a>
-
-      <a href="{% if 'view_sustainability' in allowed %}{% url 'reports:sustainability' %}{% else %}#{% endif %}" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>
-      <a href="{% if user.is_authenticated %}{% url 'notifications:inbox' %}{% else %}#{% endif %}" class="{% block nav_inbox %}{% endblock %}">Inbox{% if unread_count %} <span class="tag ai">{{ unread_count }}</span>{% endif %}</a>
-
+      {% if 'register_asset' in allowed %}<a href="{% url 'assets:list' %}" class="{% block nav_assets %}{% endblock %}">Assets</a>{% endif %}
+      {% if 'search_assets' in allowed %}<a href="{% url 'exchange:catalogue' %}" class="{% block nav_catalogue %}{% endblock %}">Catalogue</a>{% endif %}
+      {% if 'submit_request' in allowed or 'reserve_units' in allowed %}<a href="{% if 'submit_request' in allowed %}{% url 'exchange:requests' %}{% else %}{% url 'transfers:incoming' %}{% endif %}" class="{% block nav_requests %}{% endblock %}">Requests</a>{% endif %}
+      {% if 'release_units' in allowed or 'confirm_receipt' in allowed %}<a href="{% url 'transfers:list' %}" class="{% block nav_transfers %}{% endblock %}">Transfers</a>{% endif %}
+      {% if 'approve_request' in allowed %}<a href="{% url 'transfers:approvals' %}" class="{% block nav_approvals %}{% endblock %}">Approvals</a>{% endif %}
+      {% if 'run_reports' in allowed %}<a href="{% url 'reports:operational' %}" class="{% block nav_reports %}{% endblock %}">Reports</a>{% endif %}
+      {% if 'view_sustainability' in allowed %}<a href="{% url 'reports:sustainability' %}" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>{% endif %}
+      {% if user.is_authenticated %}<a href="{% url 'notifications:inbox' %}" class="{% block nav_inbox %}{% endblock %}">Inbox{% if unread_count %} <span class="tag ai">{{ unread_count }}</span>{% endif %}</a>{% endif %}
+      {# Matches now sit inside the request form (AI #2); Maintenance is a later increment, so neither has a menu link. #}
     </nav>
     {% endblock %}
 

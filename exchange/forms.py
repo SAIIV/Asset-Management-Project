@@ -26,7 +26,11 @@ class RequestForm(forms.Form):
         help_text="Items from the catalogue you would like. Leave empty if you have not chosen yet.",
     )
 
+    # AI #2: the AIRecord of the ranking shown, so Submit can store the requester's choice with it (gate 2).
+    ai_record = forms.IntegerField(widget=forms.HiddenInput, required=False)
+
     def __init__(self, *args, eligible=None, **kwargs):
+
         super().__init__(*args, **kwargs)
         if eligible is not None:
             self.fields["candidates"].queryset = eligible

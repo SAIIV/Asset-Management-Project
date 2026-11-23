@@ -24,3 +24,12 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.message[:60]
+
+    #: how a linked record is named on screen ("ResourceRequest:1" -> "Request #1")
+    RECORD_LABELS = {"ResourceRequest": "Request", "Transfer": "Transfer", "Asset": "Asset"}
+
+    @property
+    def about(self):
+        table, _, pk = self.linked_record.partition(":")
+        return f"{self.RECORD_LABELS.get(table, table)} #{pk}" if pk else ""
+

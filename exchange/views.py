@@ -49,7 +49,7 @@ def catalogue_list(request):
         condition = ""
     department = _int_or_none(request.GET.get("department", ""))
     results = search(query, category, condition, department)
-    page = Paginator(results, 20).get_page(request.GET.get("page"))
+    page = Paginator(results, 10).get_page(request.GET.get("page"))
     filters = request.GET.copy()
     filters.pop("page", None)
     return render(request, "exchange/catalogue_list.html", {
@@ -126,6 +126,8 @@ def request_create(request):
     asset_id = request.GET.get("asset", "")
     if asset_id.isdigit() and eligible.filter(pk=int(asset_id)).exists():
         initial["candidates"] = [int(asset_id)]
+    if request.method == "POST" and "find_matches" in request.POST:
+        return _find_matches(request, eligible)
     form = RequestForm(request.POST or None, eligible=eligible, initial=initial)
     if request.method == "POST" and form.is_valid():
         submit = "save_draft" not in request.POST
@@ -134,10 +136,47 @@ def request_create(request):
         except RequestError as error:
             form.add_error(None, str(error))
         else:
+            if form.cleaned_data.get("ai_record"):
+                from ai.matching import save_matches
+                save_matches(new, form.cleaned_data["ai_record"], form.cleaned_data.get("candidates") or [])
+
             messages.success(request, f"Request #{new.pk} was {'submitted' if submit else 'saved as a draft'}.")
             return redirect("exchange:request_detail", pk=new.pk)
     return render(request, "exchange/request_form.html", {"form": form, "editing": False})
 
+
+def _find_matches(request, eligible):
+    """AI #2 (Mockup 2): rank the eligible units for what the requester typed, before submitting.
+
+    The form comes back with everything typed. Nothing is ticked for the requester:
+    choosing the units is the requester's decision (gate 2).
+    """
+    from datetime import date
+
+    from ai.matching import rank_matches
+
+    typed = request.POST.dict()
+    for key in ("csrfmiddlewaretoken", "find_matches", "ai_record"):
+        typed.pop(key, None)
+    typed["candidates"] = [int(pk) for pk in request.POST.getlist("candidates") if pk.isdigit()]
+    form = RequestForm(initial=typed, eligible=eligible)
+    purpose = typed.get("purpose", "").strip()
+    try:
+        required_by = date.fromisoformat(typed.get("required_by", ""))
+        quantity = max(1, int(typed.get("quantity") or 1))
+    except ValueError:
+        required_by = quantity = None
+    if not purpose or required_by is None:
+        messages.warning(request, "Type the purpose and the required-by date first, then press Find matches.")
+        return render(request, "exchange/request_form.html", {"form": form, "editing": False})
+    specs = [s.strip() for s in typed.get("mandatory_specs_text", "").split(",") if s.strip()]
+    ranking = rank_matches(request.user, purpose, specs, quantity, required_by, typed.get("urgency", "Normal"),
+                           typed.get("preferred_condition", ""))
+    if not ranking.fallback:
+        form.initial["ai_record"] = ranking.record_id
+    return render(request, "exchange/request_form.html", {
+        "form": form, "editing": False, "ranking": ranking, "ticked": typed["candidates"],
+    })
 
 @permission_required(Action.SUBMIT_REQUEST)
 def request_detail(request, pk):

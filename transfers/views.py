@@ -19,6 +19,8 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from accounts.decorators import permission_required
+from accounts.models import AuditLog
+
 from accounts.permissions import Action, can
 from assets.models import Asset
 from assets.states import history_of
@@ -52,9 +54,27 @@ def incoming(request):
         mine = [a for a in candidates_of(req) if a.owner_department_id == dept]
         rows.append({"req": req, "mine": mine, "needed": still_needed(req)})
     rows.sort(key=lambda row: not row["mine"])  # requests naming our items first
+    declined = set(AuditLog.objects.filter(action="cannot_supply", user__department_id=dept)
+                   .values_list("record_id", flat=True))
+    for row in rows:
+        row["declined"] = row["req"].pk in declined
     to_release = (Transfer.objects.filter(asset__owner_department_id=dept, status__in=[
         TransferStatus.SCHEDULED, TransferStatus.DISPUTED]).select_related("asset", "request__requester__department"))
     return render(request, "transfers/incoming.html", {"rows": rows, "to_release": to_release})
+
+
+@require_POST
+@permission_required(Action.RESERVE_UNITS)
+def cannot_supply(request, pk):
+    """UC-13 alternative: tell the requester my department cannot supply it (the request stays open)."""
+    req = _load_request(request, pk)
+    try:
+        TransferService.cannot_supply(request.user, req, request.POST.get("reason", ""))
+    except TransferError as error:
+        messages.error(request, str(error))
+        return redirect("transfers:custodian_request", pk=req.pk)
+    messages.success(request, f"The requester was told your department cannot supply request #{req.pk}.")
+    return redirect("transfers:incoming")
 
 
 @permission_required(Action.RESERVE_UNITS)
@@ -78,7 +98,9 @@ def custodian_request(request, pk):
         return redirect("transfers:custodian_request", pk=req.pk)
     return render(request, "transfers/custodian_request.html", {
         "req": req, "spec": getattr(req, "specification", None), "candidates": candidates_of(req),
-        "units": units.select_related("category").order_by("-id"), "chosen": chosen,
+        # the requester's choices first, then the newest units
+        "units": sorted(units.select_related("category"), key=lambda a: (a.pk not in chosen, -a.pk)),
+        "chosen": chosen,
         "needed": still_needed(req), "reservations": active_reservations(req),
         "can_reserve": req.status == RequestStatus.SUBMITTED,
     })

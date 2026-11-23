@@ -1,6 +1,7 @@
 """C5 Approve and transfer: reserve, approve, release and receive (UC-13 to UC-17).
 
     TransferService.reserve(custodian, request, assets)             UC-13 Reserve eligible assets
+    TransferService.cannot_supply(custodian, request, reason)       UC-13 alternative: tell the requester
     TransferService.decide(approver, request, decision, reason)     UC-14 Approve / reject / return
     TransferService.release(custodian, transfer)                    UC-16 Release units
     TransferService.receive(requester, transfer, condition, ok, note)  UC-17 Confirm receipt
@@ -153,7 +154,31 @@ class TransferService:
 
     @staticmethod
     @transaction.atomic
+    def cannot_supply(custodian, request, reason):
+        """UC-13 alternative: the custodian's department cannot supply this request.
+
+        The custodian does not reject the request (only an independent approver can,
+        BR-02): it stays Submitted, nothing is reserved, and the requester is told why
+        so they can revise or cancel it (UC-11, UC-12). Other departments can still supply it.
+        """
+        reason = (reason or "").strip()
+        if not reason:
+            raise TransferError("Say why your department cannot supply it, so the requester knows what to change.")
+        request = ResourceRequest.objects.select_for_update().get(pk=request.pk)
+        if request.status != RequestStatus.SUBMITTED:
+            raise TransferError(f"Request #{request.pk} is {request.get_status_display()}, so there is nothing "
+                                f"to turn down any more.")
+        department = custodian.department
+        AuditService.log(custodian, "cannot_supply", request, reason=reason,
+                         after={"department": department.name if department else ""})
+        notify(request.requester, f"{department or 'A department'} cannot supply request #{request.pk}: {reason}. "
+                                  f"The request stays open; you can change or cancel it.", request)
+        return request
+
+    @staticmethod
+    @transaction.atomic
     def release(custodian, transfer):
+
         """UC-16: hand the unit over. Custody stays with the sender until the receiver confirms."""
         transfer = Transfer.objects.select_for_update().select_related("asset", "request").get(pk=transfer.pk)
         if transfer.status != TransferStatus.SCHEDULED:

@@ -30,6 +30,8 @@ from circular_campus.choices import AIDecision, AITask, ModelKind
 
 from .embeddings import MODEL_NAME, EmbeddingUnavailable, cosine, get_embedder
 from .gateway import model_version, record, record_decision
+from .matching import SEED_TAGS, clean_seed_text
+
 
 PROMPT_VERSION = "classify-text v1"
 THRESHOLDS = {"min_similarity": 0.60, "min_lead": 0.10}
@@ -63,7 +65,8 @@ def _path(category):
 def category_text(category):
     examples = list(category.assets.order_by("id").values_list("name", flat=True)[:EXAMPLES_PER_CATEGORY])
     text = f"{_path(category)}. {category.description}".strip()
-    return f"{text} Examples: {', '.join(examples)}." if examples else text
+    text = f"{text} Examples: {', '.join(examples)}." if examples else text
+    return clean_seed_text(text)  # the seed's "(synthetic test data)" says nothing about the category
 
 
 def leaf_categories():
@@ -94,7 +97,7 @@ def category_scores(embedder, categories, asset_vector):
                 for c in categories}
     missing = sorted({n for names in examples.values() for n in names if (embedder.name, n) not in _example_vectors})
     if missing:
-        for name, vector in zip(missing, embedder.embed(missing)):
+        for name, vector in zip(missing, embedder.embed([clean_seed_text(n) for n in missing])):
             _example_vectors[(embedder.name, name)] = vector
     return {c.pk: max([cosine(asset_vector, vectors[c.pk])]
                       + [cosine(asset_vector, _example_vectors[(embedder.name, n)]) for n in examples[c.pk]])
@@ -102,7 +105,8 @@ def category_scores(embedder, categories, asset_vector):
 
 
 def suggested_tags(category, limit=3):
-    counts = Counter(tag.lower() for tags in category.assets.values_list("tags", flat=True) for tag in tags)
+    counts = Counter(tag.lower() for tags in category.assets.values_list("tags", flat=True) for tag in tags
+                     if tag.lower() not in SEED_TAGS)  # never suggest the seed-data tag "synthetic"
     return [tag for tag, _ in counts.most_common(limit)]
 
 
