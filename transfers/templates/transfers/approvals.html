@@ -11,7 +11,7 @@
 <div class="card">
   <h2>Waiting for a decision</h2>
   <table>
-    <thead><tr><th>Request</th><th>From</th><th>Purpose</th><th>Units</th><th>Required by</th></tr></thead>
+    <thead><tr><th>Request</th><th>From</th><th>Purpose</th><th>Units</th><th>Required by</th><th></th></tr></thead>
     <tbody>
       {% for req in waiting %}
       <tr>
@@ -20,9 +20,11 @@
         <td>{{ req.specification.purpose|truncatechars:60 }}</td>
         <td>{{ req.quantity }}</td>
         <td>{{ req.required_by }}{% if req.urgency == "High" %} <span class="tag warn">Urgent</span>{% endif %}</td>
+        <td><a class="btn primary" href="{% url 'transfers:approval_detail' req.pk %}">Review</a></td>
       </tr>
       {% empty %}
-      <tr><td colspan="5">Nothing is waiting for you.</td></tr>
+      <tr><td colspan="6">Nothing is waiting for you.</td></tr>
+
       {% endfor %}
     </tbody>
   </table>

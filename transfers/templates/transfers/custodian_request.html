@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Request #{{ req.pk }} - Circular Campus{% endblock %}
 {% block nav_requests %}on{% endblock %}
 {% block content %}
@@ -35,9 +36,9 @@
   <p class="help">Only Available units are listed. Units are reserved together or not at all; if one was taken meanwhile, nothing is reserved and the list refreshes.</p>
   <table>
     <thead><tr><th></th><th>Asset</th><th>Category</th><th>Condition</th><th>Listed</th></tr></thead>
-    <tbody>
+    <tbody data-pager="10">
       {% for a in units %}
-      <tr>
+      <tr data-pager-item>
         <td><input type="checkbox" name="assets" value="{{ a.pk }}" id="u{{ a.pk }}"{% if a.pk in chosen %} checked{% endif %}></td>
         <td><label for="u{{ a.pk }}">#{{ a.pk }} {{ a.name }}</label>{% if a.pk in chosen %} <span class="tag ok">Chosen by requester</span>{% endif %}</td>
         <td>{{ a.category.name }}</td>
@@ -51,5 +52,21 @@
   </table>
   <div class="form-actions"><button type="submit" class="btn primary">Reserve selected units</button></div>
 </form>
+<script src="{% static 'js/pager.js' %}" defer></script>
 {% endif %}
+
+{% if can_reserve %}
+<form method="post" action="{% url 'transfers:cannot_supply' req.pk %}" class="card">
+  {% csrf_token %}
+  <h2>Cannot supply it?</h2>
+  <p class="help">Only an approver can reject a request (BR-02). If your department has nothing suitable, tell the
+    requester why. The request stays open, nothing is reserved, and they can change or cancel it.</p>
+  <div class="field">
+    <label for="id_reason">Reason *</label>
+    <input type="text" name="reason" id="id_reason" maxlength="300" required placeholder="e.g. our only spare laptop needs repair">
+  </div>
+  <button type="submit" class="btn danger">Tell the requester we cannot supply it</button>
+</form>
+{% endif %}
+
 {% endblock %}

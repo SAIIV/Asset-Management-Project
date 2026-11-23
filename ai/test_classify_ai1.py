@@ -64,7 +64,17 @@ class ClassifyTests(TestCase):
         self.assertEqual((item.task, item.output["categoryId"], item.fallback), ("classify_asset", self.laptops.pk, False))
         self.assertEqual(item.model_version.thresholds, {"min_similarity": 0.60, "min_lead": 0.10})
 
+    def test_seed_tag_synthetic_is_never_suggested(self):
+        make_asset(name="Seeded notebook (synthetic #003)", category=self.laptops, owner_department=self.dept,
+                   tags=["synthetic", "laptops"])
+        make_asset(name="Seeded notebook (synthetic #004)", category=self.laptops, owner_department=self.dept,
+                   tags=["synthetic", "laptops"])
+        suggestion = classify_asset("Lenovo laptop")
+        self.assertNotIn("synthetic", suggestion.tags)
+        self.assertIn("laptops", suggestion.tags)
+
     def test_close_call_is_unsure(self):
+
         suggestion = classify_asset("Laptop with monitor")  # equally close to both: lead 0 < 0.10
         self.assertTrue(suggestion.unsure)
         self.assertIsNone(suggestion.category)
