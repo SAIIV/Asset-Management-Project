@@ -107,6 +107,11 @@ You need: Python 3.12, Git, Docker Desktop and VS Code.
    no real staff or asset data is used. Running it again does not create
    duplicates.
 
+   For a demo, run `python manage.py seed_data --history` instead. It also sends
+   8 synthetic requests through the real workflow (some received, one in
+   transit, one waiting for approval, one waiting for the custodian), so the
+   dashboard, reports, inboxes and AI summary have figures to show.
+
    | Role | Email | Password |
    |---|---|---|
    | Requester | requester@circular-campus.example | Synthetic-Demo-2026 |

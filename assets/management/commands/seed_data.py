@@ -1,11 +1,19 @@
 """Fill an empty database with SYNTHETIC test data.
 
-    python manage.py seed_data
+    python manage.py seed_data             # departments, categories, assets, users
+    python manage.py seed_data --history   # ... plus a few requests run through the real workflow
 
 Creates the 8 roles, 5 fictional departments, a small category tree, about 50
 synthetic assets (IT, lab and furniture) and 4 test users, one per Prototype 1
 role. Every record is invented and marked "synthetic", so no real staff or
 asset data is ever stored or sent to the Gemini API (Phase 6 plan, Section 2).
+
+--history also sends 8 synthetic requests through the real services (request,
+reserve, approve, release, receive), so the dashboard, reports, inboxes and the
+AI summary have something to show: permanent transfers received, one in
+transit, one waiting for approval, one waiting for the custodian and a loan.
+Every listed seed asset also gets its "publish_asset" audit row (by the system),
+which the reuse rate needs.
 
 Running it twice is safe: existing records are found and reused, not copied.
 """
@@ -18,9 +26,18 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from accounts.models import Role, User, UserRole
+from accounts.models import AuditLog, Role, User, UserRole
+from accounts.services import AuditService
 from assets.models import Asset, Category, Department, FurnitureAsset, ITAsset, LabEquipment
-from circular_campus.choices import AssetStatus, Condition, RoleName
+from circular_campus.choices import (
+    ApprovalDecision,
+    AssetStatus,
+    Condition,
+    RequestStatus,
+    RoleName,
+    TransferStatus,
+    TransferType,
+)
 
 SYNTHETIC_TAG = "synthetic"
 EMAIL_DOMAIN = "circular-campus.example"   # .example is reserved and can never be a real address
@@ -69,8 +86,27 @@ STATUS_MIX = [AssetStatus.AVAILABLE] * 6 + [AssetStatus.DRAFT, AssetStatus.IN_US
 CONDITION_MIX = [Condition.NEW, Condition.GOOD, Condition.GOOD, Condition.GOOD, Condition.FAIR, Condition.NEEDS_REPAIR]
 
 
+HISTORY_MARK = "SYNTHETIC demo history"
+# (how far the request gets, request type, purpose) - one unit each, in this order. If the custodian's
+# department has fewer Available units than steps, the last steps are skipped.
+HISTORY = [
+    (TransferStatus.RECEIVED, TransferType.PERMANENT, "replace worn-out equipment in a teaching lab"),
+    (RequestStatus.UNDER_REVIEW, TransferType.PERMANENT, "spare unit for exam week"),
+    (TransferStatus.RECEIVED, TransferType.PERMANENT, "equip a new research assistant"),
+    (RequestStatus.SUBMITTED, TransferType.PERMANENT, "extra unit for a summer course"),
+    (TransferStatus.RECEIVED, TransferType.PERMANENT, "set up a student help desk"),
+    (TransferStatus.DISPATCHED, TransferType.PERMANENT, "second workstation for the lab"),
+    (TransferStatus.RECEIVED, TransferType.PERMANENT, "furnish a shared project room"),
+    (TransferStatus.RECEIVED, TransferType.LOAN, "short loan for an open day"),
+]
+
+
 class Command(BaseCommand):
     help = "Create synthetic departments, categories, assets and 4 test users (safe to run twice)."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--history", action="store_true",
+                            help="Also run 8 synthetic requests through the workflow (for demos).")
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -115,6 +151,47 @@ class Command(BaseCommand):
         self.stdout.write(f"Test users (password: {password}):")
         for role_name, _, local_part, _ in TEST_USERS:
             self.stdout.write(f"  {role_name:<14} {local_part}@{EMAIL_DOMAIN}")
+        if options.get("history"):
+            self.stdout.write(self._create_history(departments))
+
+    def _create_history(self, departments):
+        """Run the HISTORY requests through the real C4/C5 services, so every rule and audit row applies."""
+        from exchange.models import RequestSpecification
+        from exchange.requests import RequestService
+        from transfers.models import Transfer
+        from transfers.services import TransferService
+
+        if RequestSpecification.objects.filter(purpose__startswith=HISTORY_MARK).exists():
+            return "Demo history already exists: nothing added."
+
+        for asset in Asset.objects.filter(tags__contains=[SYNTHETIC_TAG], is_listed=True):
+            if not AuditLog.objects.filter(action="publish_asset", record_id=asset.pk).exists():
+                AuditService.log(None, "publish_asset", asset, reason="listed by seed_data (synthetic test data)")
+
+        users = {local: User.objects.get(email=f"{local}@{EMAIL_DOMAIN}") for _, _, local, _ in TEST_USERS}
+        requester, custodian, approver = users["requester"], users["custodian"], users["approver"]
+        units = list(Asset.objects.filter(owner_department=custodian.department, status=AssetStatus.AVAILABLE,
+                                          is_listed=True, tags__contains=[SYNTHETIC_TAG]).order_by("pk"))
+        steps = list(zip(HISTORY, units))
+        for (goal, kind, purpose), asset in steps:
+            request = RequestService.create(requester, {
+                "purpose": f"{HISTORY_MARK}: {purpose}", "quantity": 1,
+                "required_by": date.today() + timedelta(days=14), "urgency": "Normal", "type": kind,
+                "mandatory_specs": [], "preferred_condition": "", "candidates": [asset],
+            })
+            if goal == RequestStatus.SUBMITTED:
+                continue
+            TransferService.reserve(custodian, request, [asset])
+            if goal == RequestStatus.UNDER_REVIEW:
+                continue
+            TransferService.decide(approver, request, ApprovalDecision.APPROVED, "synthetic demo history")
+            transfer = Transfer.objects.get(request=request, asset=asset)
+            TransferService.release(custodian, transfer)
+            if goal == TransferStatus.RECEIVED:
+                TransferService.receive(requester, transfer, asset.condition)
+        return (f"Demo history: {len(steps)} requests from {requester.department} to {custodian.department} "
+                f"({sum(1 for (g, _, _), _ in steps if g == TransferStatus.RECEIVED)} received). "
+                f"Open the Sustainability dashboard as {users['admin'].email} to see the figures.")
 
     def _create_assets(self, rng, departments, categories):
         existing = Asset.objects.filter(tags__contains=[SYNTHETIC_TAG]).count()
