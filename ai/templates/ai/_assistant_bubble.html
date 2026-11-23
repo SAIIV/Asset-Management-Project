@@ -1,0 +1,29 @@
+{% load static %}
+{# The assistant bubble on every page (not on the full chat page). Talks to the same views as the chat page. #}
+<div class="ai-bubble" data-latest-url="{% url 'assistant:latest' %}" data-send-url="{% url 'assistant:send' %}" data-full-url="{% url 'assistant:page' %}">
+  <button type="button" class="ai-ball" aria-expanded="false" aria-controls="ai-panel" title="Ask the assistant">
+    <img src="{% static 'img/logo.svg' %}" alt=""><span class="sr">Ask the assistant</span>
+  </button>
+  <section class="ai-panel" id="ai-panel" aria-label="Assistant" hidden>
+    <header>
+      <div><strong>Assistant</strong><small>Answers from Circular Campus data</small></div>
+      <a href="{% url 'assistant:page' %}" class="ai-full" data-full>Open full chat &#8599;</a>
+      <button type="button" class="ai-close" aria-label="Close">&times;</button>
+    </header>
+    <div class="ai-log" aria-live="polite"></div>
+    <form class="ai-form" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="chat" value="">
+      <div class="ai-preview" hidden><img alt=""><button type="button" data-unattach>&times;</button></div>
+      <div class="ai-row">
+        <label class="attach" title="Attach a photo">
+          <input type="file" name="photo" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7L10.2 18.7a1.7 1.7 0 0 1-2.4-2.4L15.5 8.6"/></svg>
+        </label>
+        <input type="text" name="question" maxlength="500" placeholder="Ask anything…" aria-label="Your question" autocomplete="off">
+        <button type="submit" aria-label="Send">&rarr;</button>
+      </div>
+    </form>
+  </section>
+</div>
+<script src="{% static 'js/assistant-bubble.js' %}" defer></script>

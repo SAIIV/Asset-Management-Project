@@ -120,5 +120,6 @@
     <span>AI suggestions never approve, release or retire anything</span>
   </footer>
 </div>
+{% block assistant_bubble %}{% if user.is_authenticated %}{% include "ai/_assistant_bubble.html" %}{% endif %}{% endblock %}
 </body>
 </html>
