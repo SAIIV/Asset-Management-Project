@@ -15,7 +15,7 @@ Prototype 1 assumptions (shown on the page):
   * A loan adds nothing (Section 12 counting rule), so only Permanent transfers count.
   * Mass is the recorded massKg, not weighed again, so isMeasured stays false.
   * kg CO2e = (massKg / 907.185) x WARM factor (MTCO2E per short ton) x 1000.
-    WARM_FACTORS below must be filled in from the EPA WARM tables the group uses;
+    WARM_FACTORS below come from the EPA WARM v16 tables (sources next to each value);
     a category without a factor gets no CO2e (never a made-up default).
 """
 
@@ -32,12 +32,19 @@ from .models import SustainabilityImpact
 SHORT_TON_KG = Decimal("907.185")
 WARM_VERSION = "EPA WARM v16"
 
-#: Top category -> avoided emissions in MTCO2E per short ton (source reduction), from EPA WARM.
-#: None = no factor entered yet, so CO2e is shown as unavailable for that category.
+#: Top category -> avoided emissions in MTCO2E per short ton when one item is reused instead of
+#: bought new (WARM "source reduction", current mix of inputs; EPA prints these as negatives).
+#: WARM has no lab-equipment or furniture material, so the closest WARM material is used:
+#:   IT Equipment  20.79  Mixed Electronics   - WARM v16 Electronics (EPA-530-R-23-022), Exhibit 1-5, p. 1-4
+#:   Lab Equipment 20.79  Mixed Electronics   - same table; most lab units are powered instruments
+#:   Furniture      1.67  Structural Steel    - WARM v16 Management Practices (EPA-530-R-23-018),
+#:                                              Exhibit 1-1; lowest of steel 1.67, lumber 2.11 and MDF 2.41,
+#:                                              so the benefit is never overstated
+#: None = no factor, so CO2e is shown as unavailable for that category.
 WARM_FACTORS = {
-    "IT Equipment": None,
-    "Lab Equipment": None,
-    "Furniture": None,
+    "IT Equipment": 20.79,
+    "Lab Equipment": 20.79,
+    "Furniture": 1.67,
 }
 
 

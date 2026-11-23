@@ -62,7 +62,8 @@ class SustainabilityTests(TestCase):
 
     def test_no_warm_factor_means_no_co2e(self):
         self.reuse("Dell monitor")
-        sync_impacts()
+        with patch.dict("reports.sustainability.WARM_FACTORS", {"IT Equipment": None}):
+            sync_impacts()
         impact = SustainabilityImpact.objects.get()
         self.assertIsNone(impact.co2e_kg)
         self.assertIn("no EPA WARM v16 factor entered for IT Equipment", impact.factor_ref)
@@ -74,6 +75,11 @@ class SustainabilityTests(TestCase):
         self.assertEqual(kg, Decimal("2000.000"))  # 1 short ton x 2 MTCO2E x 1000
         self.assertIn("IT Equipment, 2.0 MTCO2E/short ton", reference)
         self.assertEqual(co2e_for(None, self.monitors)[0], None)
+
+    def test_epa_warm_factors_are_filled_in(self):
+        kg, reference = co2e_for(Decimal("5.000"), self.monitors)  # 5 kg of IT equipment, Mixed Electronics
+        self.assertEqual(kg, Decimal("114.585"))
+        self.assertIn("IT Equipment, 20.79 MTCO2E/short ton", reference)
 
     def test_loan_is_not_counted(self):
         transfer = self.reuse("Loaned monitor")
@@ -107,7 +113,7 @@ class SustainabilityTests(TestCase):
         page = self.client.get(reverse("reports:sustainability"))
         self.assertContains(page, "Dell monitor")
         self.assertContains(page, "AED 800.00")
-        self.assertContains(page, "Unavailable")  # no WARM factor entered yet
+        self.assertContains(page, "114.6 kg CO2e")  # 5 kg x EPA WARM Mixed Electronics factor
         self.assertEqual(SustainabilityImpact.objects.count(), 1)  # the visit stored the impact
 
     def test_others_cannot_open_it(self):
