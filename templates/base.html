@@ -50,6 +50,7 @@
       {% if 'approve_request' in allowed %}<a href="{% url 'transfers:approvals' %}" class="{% block nav_approvals %}{% endblock %}">Approvals</a>{% endif %}
       {% if 'run_reports' in allowed %}<a href="{% url 'reports:operational' %}" class="{% block nav_reports %}{% endblock %}">Reports</a>{% endif %}
       {% if 'view_sustainability' in allowed %}<a href="{% url 'reports:sustainability' %}" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>{% endif %}
+      {% if user.is_authenticated %}<a href="{% url 'assistant:page' %}" class="{% block nav_assistant %}{% endblock %}">Assistant</a>{% endif %}
       {% if user.is_authenticated %}<a href="{% url 'notifications:inbox' %}" class="{% block nav_inbox %}{% endblock %}">Inbox{% if unread_count %} <span class="tag ai">{{ unread_count }}</span>{% endif %}</a>{% endif %}
       {% if 'report_fault' in allowed or 'propose_lifecycle' in allowed or 'authorize_lifecycle' in allowed %}<a href="{% url 'maintenance:list' %}" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>{% endif %}
       {# Matches sit inside the request form (AI #2), so they have no menu link. #}

@@ -15,6 +15,7 @@ urlpatterns = [
     path("reports/", include("reports.urls")),
     path("maintenance/", include("assets.maintenance_urls")),
     path("ai/advice/", include("ai.advice_urls")),
+    path("assistant/", include("ai.assistant_urls")),
 
 
 
