@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load advice %}
 {% block title %}{{ asset.name }} - Circular Campus{% endblock %}
 {% block nav_assets %}on{% endblock %}
 {% block content %}
@@ -117,6 +118,8 @@
     {% endif %}
   </div>
 </div>
+
+{% if asset.status != "Retired" and asset.status != "Draft" %}{% advice_card asset %}{% endif %}
 
 <div class="grid">
   <div class="card">

@@ -1,0 +1,35 @@
+<div class="card ai" id="advice">
+  <h2>What should happen to this item? <span class="tag ai">AI advice</span></h2>
+  {% if advice %}
+    {% if advice.fallback %}
+      <div class="down">{{ advice.message }}</div>
+    {% else %}
+      <p><span class="tag ok" style="font-size:13px">{{ advice.action }}</span> {{ advice.meaning }}</p>
+      <p>{{ advice.reason }}</p>
+      <p class="kpi">Suggested by {{ advice.model }}{% if advice.confidence is not None %}, confidence {{ advice.confidence|floatformat:2 }}{% endif %}.
+        Based only on this item's facts: condition, age, value, repairs, reuse and demand. Nothing has been changed.</p>
+      {% if answered %}
+        <p><span class="tag">{{ answered }}</span>
+        {% if answered == "Accepted" %}
+          {% if advice.action == "Publish for reuse" %}Use "Publish to catalogue" at the top of the page.
+          {% elif advice.action == "Repair" %}Report the fault in "Faults and retirement" below, then start the repair.
+          {% elif advice.action == "Keep using" %}No step needed.
+          {% else %}Choose {{ advice.action|lower }} in "Retire this item" below; an approver must agree.{% endif %}
+        {% endif %}</p>
+      {% else %}
+        <form method="post" action="{% url 'advice:answer' asset.pk advice.record_id %}" class="inline-form">
+          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+          <button type="submit" name="decision" value="accept" class="btn primary">Follow this advice</button>
+          <button type="submit" name="decision" value="dismiss" class="btn">Dismiss</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  {% else %}
+    <p class="kpi">Ask the AI whether to keep, repair, offer for reuse, donate, recycle or dispose of this item.
+      It is a suggestion only: you decide, and approvals still apply.</p>
+  {% endif %}
+  <form method="post" action="{% url 'advice:ask' asset.pk %}" style="margin-top:8px">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <button type="submit" class="btn">{% if advice %}Ask again{% else %}Ask AI what to do{% endif %}</button>
+  </form>
+</div>
