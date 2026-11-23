@@ -4,23 +4,35 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Circular Campus{% endblock %}</title>
+  <link rel="icon" href="{% static 'img/logo.svg' %}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="{% static 'css/circular.css' %}">
   <script src="{% static 'js/menu.js' %}" defer></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
-{#  Shared page layout (Design Document Section 7 mockups).                    #}
+{#  Shared page layout.                                                          #}
 {#  Every page does:  {% extends "base.html" %}                                 #}
-{#    {% block nav_assets %}on{% endblock %} <- highlights that menu item       #}
+{#    {% block nav_assets %}on{% endblock %} <- highlights that menu entry      #}
 {#    {% block content %} ... {% endblock %} <- the page itself                  #}
+{#    {% block main_class %}full{% endblock %} <- edge-to-edge page (intro, sign-in) #}
 <div class="app">
   <header class="topbar">
-    <a class="brand" href="{% url 'home' %}">Circular Campus</a>
+    <div class="topbar-left">
+      {% if user.is_authenticated %}
+        <button type="button" class="menu-btn" aria-expanded="false" aria-controls="launcher">
+          <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span>
+        </button>
+      {% endif %}
+      <a class="brand" href="{% url 'home' %}"><img src="{% static 'img/logo.svg' %}" alt="">Circular Campus</a>
+      {% if ku_logo %}<span class="partner"><img src="{% static ku_logo %}" alt="Khalifa University"></span>{% endif %}
+    </div>
     {# Signed-in user and role indicator #}
     <div class="who" aria-label="Signed-in user">
       {% if user.is_authenticated %}
-        {% if user.department %}<span class="dept">{{ user.department.name }}</span> ·{% endif %}
-        <span>{{ user.name }}</span>
+        {% if user.department %}<span class="dept">{{ user.department.name }}</span>{% endif %}
         {% for role in user.roles.all %}<span class="role">{{ role }}</span>{% empty %}<span class="role">No role</span>{% endfor %}
         <details class="usermenu">
           <summary aria-label="Account menu"><span class="avatar">{{ user.initials }}</span></summary>
@@ -33,31 +45,67 @@
           </div>
         </details>
       {% else %}
-        <span class="role">Not signed in</span>
+        {% block topbar_action %}<a class="top-signin" href="{% url 'login' %}">Sign in</a>{% endblock %}
       {% endif %}
     </div>
   </header>
 
-  <div class="main">
-    {% block sidebar %}
-    {# Menu items of the mockups. Each link is shown only to roles that may use it (the "allowed" actions). #}
-    <nav class="side" aria-label="Main menu">
-      <a href="{% url 'home' %}" class="{% block nav_dashboard %}{% endblock %}">Dashboard</a>
-      {% if 'register_asset' in allowed %}<a href="{% url 'assets:list' %}" class="{% block nav_assets %}{% endblock %}">Assets</a>{% endif %}
-      {% if 'search_assets' in allowed %}<a href="{% url 'exchange:catalogue' %}" class="{% block nav_catalogue %}{% endblock %}">Catalogue</a>{% endif %}
-      {% if 'submit_request' in allowed or 'reserve_units' in allowed %}<a href="{% if 'submit_request' in allowed %}{% url 'exchange:requests' %}{% else %}{% url 'transfers:incoming' %}{% endif %}" class="{% block nav_requests %}{% endblock %}">Requests</a>{% endif %}
-      {% if 'release_units' in allowed or 'confirm_receipt' in allowed %}<a href="{% url 'transfers:list' %}" class="{% block nav_transfers %}{% endblock %}">Transfers</a>{% endif %}
-      {% if 'approve_request' in allowed %}<a href="{% url 'transfers:approvals' %}" class="{% block nav_approvals %}{% endblock %}">Approvals</a>{% endif %}
-      {% if 'run_reports' in allowed %}<a href="{% url 'reports:operational' %}" class="{% block nav_reports %}{% endblock %}">Reports</a>{% endif %}
-      {% if 'view_sustainability' in allowed %}<a href="{% url 'reports:sustainability' %}" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>{% endif %}
-      {% if user.is_authenticated %}<a href="{% url 'assistant:page' %}" class="{% block nav_assistant %}{% endblock %}">Assistant</a>{% endif %}
-      {% if user.is_authenticated %}<a href="{% url 'notifications:inbox' %}" class="{% block nav_inbox %}{% endblock %}">Inbox{% if unread_count %} <span class="tag ai">{{ unread_count }}</span>{% endif %}</a>{% endif %}
-      {% if 'report_fault' in allowed or 'propose_lifecycle' in allowed or 'authorize_lifecycle' in allowed %}<a href="{% url 'maintenance:list' %}" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>{% endif %}
-      {# Matches sit inside the request form (AI #2), so they have no menu link. #}
-    </nav>
-    {% endblock %}
+  {% block sidebar %}
+  {% if user.is_authenticated %}
+  {# The menu behind the ☰ button: sections in columns, numbered. Each entry is shown only to roles that may use it. #}
+  <nav class="launcher" id="launcher" aria-label="Main menu">
+    <div class="launcher-inner">
+      {% if 'search_assets' in allowed %}
+      <form class="launcher-search" method="get" action="{% url 'exchange:catalogue' %}" role="search">
+        <input type="text" name="q" placeholder="Search the catalogue…" aria-label="Search the catalogue">
+        <button type="submit">Search</button>
+      </form>
+      {% endif %}
+      <div class="launcher-groups">
+        <div class="launcher-group">
+          <h3>Start</h3>
+          <a class="dest {% block nav_dashboard %}{% endblock %}" href="{% url 'home' %}"><span class="ix">01</span><strong>Dashboard</strong><small>What needs you today</small></a>
+          <a class="dest {% block nav_assistant %}{% endblock %}" href="{% url 'assistant:page' %}"><span class="ix">02</span><strong>Assistant</strong><small>Ask in plain words</small></a>
+          <a class="dest {% block nav_inbox %}{% endblock %}" href="{% url 'notifications:inbox' %}"><span class="ix">03</span><strong>Inbox{% if unread_count %}<span class="count">{{ unread_count }}</span>{% endif %}</strong><small>Messages about your work</small></a>
+        </div>
+        {% if 'search_assets' in allowed or 'submit_request' in allowed or 'reserve_units' in allowed %}
+        <div class="launcher-group">
+          <h3>Find and request</h3>
+          {% if 'search_assets' in allowed %}<a class="dest {% block nav_catalogue %}{% endblock %}" href="{% url 'exchange:catalogue' %}"><span class="ix">04</span><strong>Catalogue</strong><small>Items other departments give away</small></a>{% endif %}
+          {% if 'submit_request' in allowed or 'reserve_units' in allowed %}<a class="dest {% block nav_requests %}{% endblock %}" href="{% if 'submit_request' in allowed %}{% url 'exchange:requests' %}{% else %}{% url 'transfers:incoming' %}{% endif %}"><span class="ix">05</span><strong>Requests</strong><small>{% if 'submit_request' in allowed %}Ask for an item and track it{% else %}Requests for your items{% endif %}</small></a>{% endif %}
+        </div>
+        {% endif %}
+        {% if 'release_units' in allowed or 'confirm_receipt' in allowed or 'approve_request' in allowed %}
+        <div class="launcher-group">
+          <h3>Move and approve</h3>
+          {% if 'release_units' in allowed or 'confirm_receipt' in allowed %}<a class="dest {% block nav_transfers %}{% endblock %}" href="{% url 'transfers:list' %}"><span class="ix">06</span><strong>Transfers</strong><small>Hand over and confirm receipt</small></a>{% endif %}
+          {% if 'approve_request' in allowed %}<a class="dest {% block nav_approvals %}{% endblock %}" href="{% url 'transfers:approvals' %}"><span class="ix">07</span><strong>Approvals</strong><small>Decide on requests</small></a>{% endif %}
+        </div>
+        {% endif %}
+        {% if 'register_asset' in allowed or 'report_fault' in allowed or 'propose_lifecycle' in allowed or 'authorize_lifecycle' in allowed %}
+        <div class="launcher-group">
+          <h3>Look after</h3>
+          {% if 'register_asset' in allowed %}<a class="dest {% block nav_assets %}{% endblock %}" href="{% url 'assets:list' %}"><span class="ix">08</span><strong>Assets</strong><small>Your department's items</small></a>{% endif %}
+          {% if 'report_fault' in allowed or 'propose_lifecycle' in allowed or 'authorize_lifecycle' in allowed %}<a class="dest {% block nav_maintenance %}{% endblock %}" href="{% url 'maintenance:list' %}"><span class="ix">09</span><strong>Maintenance</strong><small>Faults, repairs and retirement</small></a>{% endif %}
+        </div>
+        {% endif %}
+        {% if 'run_reports' in allowed or 'view_sustainability' in allowed %}
+        <div class="launcher-group">
+          <h3>Insight</h3>
+          {% if 'run_reports' in allowed %}<a class="dest {% block nav_reports %}{% endblock %}" href="{% url 'reports:operational' %}"><span class="ix">10</span><strong>Reports</strong><small>Transfers and requests, CSV</small></a>{% endif %}
+          {% if 'view_sustainability' in allowed %}<a class="dest {% block nav_sustainability %}{% endblock %}" href="{% url 'reports:sustainability' %}"><span class="ix">11</span><strong>Sustainability</strong><small>Reuse and CO2e avoided</small></a>{% endif %}
+        </div>
+        {% endif %}
+        {# Matches sit inside the request form (AI #2), so they have no menu entry. #}
+      </div>
+    </div>
+  </nav>
+  <div class="scrim" aria-hidden="true"></div>
+  {% endif %}
+  {% endblock %}
 
-    <main class="content">
+  <div class="main">
+    <main class="content {% block main_class %}{% endblock %}">
       {% if messages %}
         <ul class="messages">
           {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
@@ -72,5 +120,6 @@
     <span>AI suggestions never approve, release or retire anything</span>
   </footer>
 </div>
+{% block assistant_bubble %}{% if user.is_authenticated %}{% include "ai/_assistant_bubble.html" %}{% endif %}{% endblock %}
 </body>
 </html>

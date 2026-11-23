@@ -72,9 +72,12 @@ def change_password(request):
     return render(request, "accounts/change_password.html", {"form": form})
 
 
-@login_required
 def home(request):
-    """Starting view after sign-in: what needs your attention, quick actions, and what your roles allow."""
+    """Starting view after sign-in: what needs your attention, quick actions, and what your roles allow.
+    Visitors who are not signed in see the introductory page instead."""
+    if not request.user.is_authenticated:
+        from .home import intro_stats
+        return render(request, "accounts/landing.html", {"stats": intro_stats()})
     from .home import quick_actions, tiles
 
     actions = allowed_actions(request.user)

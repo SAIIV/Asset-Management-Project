@@ -1,66 +1,118 @@
 {% extends "base.html" %}
 {% block title %}Assistant - Circular Campus{% endblock %}
 {% block nav_assistant %}on{% endblock %}
-{% block extra_head %}
-<style>
-  .chat { display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
-  .bubble { border-radius: 12px; padding: 10px 14px; max-width: 85%; line-height: 1.45; }
-  .bubble.you { align-self: flex-end; background: var(--blue); color: #fff; }
-  .bubble.bot { align-self: flex-start; background: #f4fbfd; border: 2px solid var(--ai-card); }
-  .bubble .kpi { margin-top: 6px; }
-  .bubble ul { margin: 6px 0 0 18px; padding: 0; }
-  .ask-box { display: flex; gap: 8px; max-width: 760px; margin-top: 12px; }
-  .ask-box input[type=text] { flex: 1; }
-  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 14px; }
-  .examples button { font-size: 12.5px; }
-</style>
-{% endblock %}
+{% block main_class %}full{% endblock %}
+{% block assistant_bubble %}{% endblock %}
 {% block content %}
-<h1>Assistant <span class="tag ai">AI</span></h1>
-<p class="sub">Ask in plain words about items you can request, your own requests, or how to do something.
-  The assistant only explains and points you to a page; it never changes anything.</p>
-
-{% if not chat %}
-  <div class="examples">
-    {% for example in examples %}
-      <form method="post">{% csrf_token %}<button type="submit" class="btn" name="question" value="{{ example }}">{{ example }}</button></form>
-    {% endfor %}
-  </div>
-{% endif %}
-
-<div class="chat">
-  {% for turn in chat %}
-    <div class="bubble you">{{ turn.q }}</div>
-    <div class="bubble bot"{% if forloop.last %} id="latest"{% endif %}>
-      {% if turn.fallback %}
-        <div class="down">{{ turn.message }}</div>
+<div class="chat-app">
+  <aside class="chat-side" aria-label="Your chats">
+    <a class="btn primary chat-new" href="{% url 'assistant:new' %}">+ New chat</a>
+    <h3 class="side-label">Your chats</h3>
+    <ul class="chat-list">
+      {% for c in chats %}
+        <li><a href="{% url 'assistant:chat' c.pk %}" class="{% if chat and c.pk == chat.pk %}on{% endif %}">
+          <span>{{ c }}</span><small>{{ c.updated_at|date:"j M, H:i" }}</small></a></li>
+      {% empty %}
+        <li class="kpi">No chats yet. Your conversations are kept here so you can pick up where you left off.</li>
+      {% endfor %}
+    </ul>
+    <div class="memory">
+      <h3 class="side-label">What the assistant remembers</h3>
+      {% if memory %}
+        <ul>{% for note in memory %}<li>{{ note }}</li>{% endfor %}</ul>
+        <form method="post" action="{% url 'assistant:forget' %}">{% csrf_token %}
+          <input type="hidden" name="back" value="{{ request.path }}">
+          <button type="submit" class="link-btn">Clear these notes</button></form>
       {% else %}
-        {{ turn.a|linebreaksbr }}
-      {% endif %}
-      {% if turn.items %}
-        <ul>{% for item in turn.items %}<li><a href="{% url 'exchange:catalogue_detail' item.id %}">{{ item.name }}</a> <span class="kpi">({{ item.dept }})</span></li>{% endfor %}</ul>
-      {% endif %}
-      {% if turn.page %}<p style="margin-top:8px"><a class="btn" href="{{ turn.page.1 }}">{{ turn.page.0 }} &rarr;</a></p>{% endif %}
-      {% if not turn.fallback %}
-        <div class="kpi">Answered by {{ turn.model }} from Circular Campus data only.
-          {% if turn.rated %}<span class="tag">{{ turn.rated }}</span>{% else %}Was this helpful?{% endif %}</div>
-        {% if not turn.rated %}
-          <form method="post" action="{% url 'assistant:rate' turn.record_id %}" class="inline-form" style="margin-top:6px">{% csrf_token %}
-            <button type="submit" name="helpful" value="yes" class="btn">Helpful</button>
-            <button type="submit" name="helpful" value="no" class="btn">Not helpful</button>
-          </form>
-        {% endif %}
+        <p class="kpi">Nothing yet. When you mention a lasting need, for example the kind of equipment your lab looks for, it is noted here. Only you see it.</p>
       {% endif %}
     </div>
-  {% endfor %}
-</div>
+  </aside>
 
-<form method="post" class="ask-box">{% csrf_token %}
-  <input type="text" name="question" maxlength="{{ max_length }}" placeholder="Ask a question..." aria-label="Your question" required autofocus>
-  <button type="submit" class="btn primary">Ask</button>
-</form>
-{% if chat %}
-  <form method="post" style="margin-top:8px">{% csrf_token %}<button type="submit" name="clear" value="1" class="btn">Clear chat</button></form>
-{% endif %}
-<p class="kpi" style="margin-top:10px">Your question and the item ids found go to the AI service; your name and e-mail do not.</p>
+  <section class="chat-main">
+    <header class="chat-head">
+      <div>
+        <span class="eyebrow">Assistant · AI</span>
+        <h1>{% if chat %}{{ chat }}{% else %}How can I help?{% endif %}</h1>
+      </div>
+      {% if chat %}
+        <form method="post" action="{% url 'assistant:delete' chat.pk %}">{% csrf_token %}
+          <button type="submit" class="link-btn">Delete this chat</button></form>
+      {% endif %}
+    </header>
+
+    <div class="chat-log" id="chat-log">
+      {% if not chat_messages %}
+        <div class="chat-empty">
+          <p>Ask in plain words about items you can request, your own requests, or how to do something.
+            You can also attach a photo of an item. The assistant only explains and points you to a page; it never changes anything.</p>
+          <div class="examples">
+            {% for example in examples %}
+              <form method="post" action="{% url 'assistant:send' %}">{% csrf_token %}
+                <button type="submit" class="chip" name="question" value="{{ example }}">{{ example }}</button></form>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      {% for m in chat_messages %}
+        <div class="msg {{ m.role }}{% if m.fallback %} down-msg{% endif %}" id="m{{ m.pk }}"{% if forloop.last %} data-latest{% endif %}>
+          {% if m.role == "user" %}
+            {% if m.photo %}<a href="{% url 'assistant:photo' m.pk %}" target="_blank"><img src="{% url 'assistant:photo' m.pk %}" alt="Photo you sent"></a>{% endif %}
+            {% if m.text %}<p>{{ m.text|linebreaksbr }}</p>{% endif %}
+          {% else %}
+            <p>{{ m.text|linebreaksbr }}</p>
+            {% if m.items %}
+              <ul class="msg-items">{% for item in m.items %}<li><a href="{% url 'exchange:catalogue_detail' item.id %}">{{ item.name }}</a> <span>{{ item.dept }}</span></li>{% endfor %}</ul>
+            {% endif %}
+            {% if m.page %}<a class="msg-page" href="{{ m.page.1 }}">{{ m.page.0 }} &rarr;</a>{% endif %}
+            {% if not m.fallback and m.ai_record_id %}
+              <div class="msg-foot">
+                {% if m.rating %}<span class="tag">{{ m.rating }}</span>{% else %}
+                <form method="post" action="{% url 'assistant:rate' m.pk %}" class="inline-form">{% csrf_token %}
+                  <span>Helpful?</span>
+                  <button type="submit" name="helpful" value="yes" class="link-btn">Yes</button>
+                  <button type="submit" name="helpful" value="no" class="link-btn">No</button>
+                </form>{% endif %}
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      {% endfor %}
+      <span id="latest"></span>
+    </div>
+
+    <form method="post" action="{% url 'assistant:send' %}" enctype="multipart/form-data" class="composer" data-composer>
+      {% csrf_token %}
+      {% if chat %}<input type="hidden" name="chat" value="{{ chat.pk }}">{% endif %}
+      <div class="composer-preview" hidden><img alt=""><button type="button" class="link-btn" data-unattach>Remove photo</button></div>
+      <div class="composer-row">
+        <label class="attach" title="Attach a photo (JPEG, PNG, WebP or GIF, up to 5 MB)">
+          <input type="file" name="photo" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7L10.2 18.7a1.7 1.7 0 0 1-2.4-2.4L15.5 8.6"/></svg>
+          <span class="sr">Attach a photo</span>
+        </label>
+        <textarea name="question" maxlength="{{ max_length }}" rows="1" placeholder="Ask a question…" aria-label="Your question" autofocus></textarea>
+        <button type="submit" class="btn primary">Send</button>
+      </div>
+      <p class="composer-note">Your question, photo and the assistant's notes go to the AI service; your name and e-mail do not.</p>
+    </form>
+  </section>
+</div>
+<script>
+  // Full chat page: Enter sends (Shift+Enter for a new line), photo preview, scroll to the newest message.
+  (function () {
+    var form = document.querySelector("[data-composer]");
+    var box = form.querySelector("textarea"), file = form.querySelector("input[type=file]");
+    var preview = form.querySelector(".composer-preview");
+    box.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+    box.addEventListener("input", function () { box.style.height = "auto"; box.style.height = Math.min(box.scrollHeight, 160) + "px"; });
+    file.addEventListener("change", function () {
+      if (!file.files[0]) { preview.hidden = true; return; }
+      preview.querySelector("img").src = URL.createObjectURL(file.files[0]); preview.hidden = false;
+    });
+    preview.querySelector("[data-unattach]").addEventListener("click", function () { file.value = ""; preview.hidden = true; });
+    form.addEventListener("submit", function () { form.classList.add("busy"); form.querySelector("button[type=submit]").textContent = "Thinking…"; });
+    var log = document.getElementById("chat-log"); log.scrollTop = log.scrollHeight;
+  })();
+</script>
 {% endblock %}

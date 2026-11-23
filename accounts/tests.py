@@ -124,4 +124,5 @@ class BaseTemplateTests(TestCase):
     def test_base_template_when_signed_out(self):
         from django.contrib.auth.models import AnonymousUser
         html = render_to_string("base.html", {"user": AnonymousUser()})
-        self.assertIn("Not signed in", html)
+        self.assertIn(">Sign in<", html)
+        self.assertNotIn("launcher", html)  # no menu for visitors

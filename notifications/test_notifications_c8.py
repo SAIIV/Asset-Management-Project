@@ -69,7 +69,7 @@ class InboxPageTests(TestCase):
         notify(self.user, "two")
         response = self.client.get(reverse("home"))
         self.assertContains(response, f'href="{reverse("notifications:inbox")}"')
-        self.assertContains(response, '<span class="tag ai">2</span>')
+        self.assertContains(response, '<span class="count">2</span>')  # in the ☰ menu
 
     def test_open_marks_read_and_goes_to_record(self):
         asset = make_asset()

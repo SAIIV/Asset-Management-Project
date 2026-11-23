@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Circular Campus - give campus equipment a second life{% endblock %}
+{% block main_class %}full{% endblock %}
+{% block content %}
+<section class="intro-hero"{% if campus_photo %} style="background-image: url('{% static campus_photo %}')"{% endif %}>
+  {% include "partials/rings.html" %}
+  <div class="intro-hero-text">
+    <span class="eyebrow">{% if ku_logo %}Khalifa University · {% endif %}Asset reuse platform</span>
+    <h1>Give campus equipment a second life.</h1>
+    <p>Departments list what they no longer need, others request it, an independent approver signs off,
+      and the item moves with a full record. Every reuse is counted in kilograms of CO2e avoided.</p>
+    <a class="btn primary" href="{% url 'login' %}">Sign in</a>
+    <a class="btn" href="#how">How it works</a>
+  </div>
+</section>
+
+<section class="band">
+  <span class="eyebrow">Today on campus</span>
+  <div class="stats">
+    {% for value, label in stats %}<div><strong>{{ value }}</strong><span>{{ label }}</span></div>{% endfor %}
+  </div>
+</section>
+
+<section class="band" id="how">
+  <span class="eyebrow">How it works</span>
+  <h2 class="band-title">From a storeroom shelf to a new lab in four steps.</h2>
+  <ol class="steps">
+    <li><strong>List</strong><span>A custodian registers a surplus item and publishes it to the catalogue.</span></li>
+    <li><strong>Request</strong><span>Another department finds it, with AI suggesting the best matches.</span></li>
+    <li><strong>Approve</strong><span>An approver who did not ask for it decides, so no one approves their own request.</span></li>
+    <li><strong>Receive</strong><span>The item is handed over and custody changes only when the receiver confirms.</span></li>
+  </ol>
+</section>
+
+<section class="feature">
+  <div class="feature-art" aria-hidden="true">
+    <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3">
+      <rect x="10" y="22" width="44" height="34"/><rect x="66" y="64" width="44" height="34"/>
+      <path d="M54 39 H84 V64" stroke-dasharray="5 5"/><path d="M78 58 L84 64 L90 58"/>
+      <circle cx="32" cy="39" r="7"/><circle cx="88" cy="81" r="7"/>
+    </svg>
+  </div>
+  <div class="feature-text">
+    <span class="eyebrow">AI matching</span>
+    <h2>The right item, found before you finish typing.</h2>
+    <p>Describe what you need and the system ranks catalogue items by how well they fit, explaining each match.
+      You choose; the AI never decides for you.</p>
+  </div>
+</section>
+<section class="feature light">
+  <div class="feature-art" aria-hidden="true">
+    <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3">
+      <path d="M14 20 H92 V70 H50 L32 88 V70 H14 Z"/><path d="M30 38 H76 M30 52 H62"/>
+      <circle cx="96" cy="92" r="14"/><path d="M90 92 L95 97 L103 87"/>
+    </svg>
+  </div>
+  <div class="feature-text">
+    <span class="eyebrow">Assistant</span>
+    <h2>Ask in plain words, from any page.</h2>
+    <p>"Are there any laptops I can request?" The assistant answers from the live catalogue and your own requests,
+      links straight to the items, and remembers your earlier conversations.</p>
+  </div>
+</section>
+<section class="feature">
+  <div class="feature-art" aria-hidden="true">
+    <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3">
+      <path d="M14 104 H106"/><rect x="22" y="70" width="14" height="34"/><rect x="46" y="52" width="14" height="52"/>
+      <rect x="70" y="36" width="14" height="68"/><path d="M92 20 C70 22 64 40 72 52 C86 50 98 38 92 20 Z"/>
+    </svg>
+  </div>
+  <div class="feature-text">
+    <span class="eyebrow">Sustainability</span>
+    <h2>Every reuse counted, with the method shown.</h2>
+    <p>The dashboard turns completed transfers into kilograms of CO2e avoided using EPA WARM factors,
+      so the numbers can be checked, not just admired.</p>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="band">
+    <h2>Have something to give, or something you need?</h2>
+    <a class="btn" href="{% url 'login' %}">Sign in to start</a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="partners">
+    <img src="{% static 'img/logo.svg' %}" alt="Circular Campus" style="background: var(--blue-dark); padding: .4rem">
+    {% if ku_logo %}<img src="{% static ku_logo %}" alt="Khalifa University">{% endif %}
+    <span class="kpi">Circular Campus is a COSC 336 course project. Accounts are created by the Administrator.</span>
+  </div>
+</section>
+{% endblock %}
