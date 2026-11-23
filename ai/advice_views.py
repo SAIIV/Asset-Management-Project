@@ -13,7 +13,7 @@ from circular_campus.choices import AssetStatus
 from .advice import answer_advice, load_advice, recommend_action
 
 
-def _asset(request, pk):
+def _asset(request, pk, **_):  # also used as the permission loader, which passes record_id
     return get_object_or_404(Asset, pk=pk)
 
 
