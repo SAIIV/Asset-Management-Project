@@ -112,6 +112,13 @@ class DraftAndPublishTests(TestCase):
         self.assertEqual(latest_published("sustainability")["text"], draft.text)
         self.assertTrue(AuditLog.objects.filter(action="publish_summary", user=self.officer).exists())
 
+    def test_published_summary_is_marked_stale_when_figures_change(self):
+        with fake("12 items were reused."):
+            draft = draft_summary("sustainability", FACTS)
+        publish_summary(self.officer, "sustainability", draft.record_id, draft.text, FACTS)
+        self.assertFalse(latest_published("sustainability", FACTS)["stale"])
+        self.assertTrue(latest_published("sustainability", {**FACTS, "itemsReused": 13})["stale"])
+
     def test_a_wrong_number_marks_the_draft_unsure_and_blocks_publishing(self):
         with fake("13 items were reused."):
             draft = draft_summary("sustainability", FACTS)

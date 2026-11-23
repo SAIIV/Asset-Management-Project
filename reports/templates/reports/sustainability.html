@@ -96,6 +96,7 @@
     <p>{{ published.text }}</p>
     <p class="kpi">AI draft{% if published.edited %}, edited{% endif %}, checked and published by {{ published.by.name }} on {{ published.at }}.
       Every number in it matched the dashboard when it was published.</p>
+    {% if published.stale %}<p class="tag bad">The figures have changed since this summary was published. Draft and publish a new one.</p>{% endif %}
   {% else %}
     <p class="kpi">No summary has been published yet.</p>
   {% endif %}

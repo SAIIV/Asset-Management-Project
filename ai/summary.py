@@ -159,7 +159,8 @@ def publish_summary(user, kind, record_id, text, facts):
     record_decision(item.pk, AITask.DRAFT_SUMMARY, AIDecision.CORRECTED if edited else AIDecision.ACCEPTED,
                     "edited by the officer before publishing" if edited else "")
     AuditService.log(user, "publish_summary", record_type="Report", record_id=item.pk,
-                     after={"kind": kind, "text": text, "edited": edited, "model": item.model_version.name})
+                     after={"kind": kind, "text": text, "edited": edited, "model": item.model_version.name,
+                            "facts": facts})
     return text
 
 
@@ -167,10 +168,12 @@ def discard_summary(user, record_id, reason=""):
     return record_decision(record_id, AITask.DRAFT_SUMMARY, AIDecision.REJECTED, reason or "discarded")
 
 
-def latest_published(kind):
+def latest_published(kind, facts=None):
+    """The last published summary; "stale" is True when the report's figures changed since then."""
     row = (AuditLog.objects.filter(action="publish_summary", after_value__kind=kind)
            .select_related("user").order_by("-created_at", "-id").first())
     if row is None:
         return None
     return {"text": row.after_value.get("text", ""), "by": row.user, "at": row.created_at,
-            "edited": row.after_value.get("edited", False), "model": row.after_value.get("model", "")}
+            "edited": row.after_value.get("edited", False), "model": row.after_value.get("model", ""),
+            "stale": facts is not None and row.after_value.get("facts") != facts}

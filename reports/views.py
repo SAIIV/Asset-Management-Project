@@ -82,9 +82,12 @@ def sustainability(request):
         return draft
     from ai.summary import latest_published
 
+    from .sustainability import summary_facts
+
     return render(request, "reports/sustainability.html", {
         "f": figures, "start": start, "end": end, "error": error,
-        "draft": draft, "published": latest_published("sustainability"),
+        "draft": draft,
+        "published": latest_published("sustainability", summary_facts(figures, start, end) if figures else None),
     })
 
 
