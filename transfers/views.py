@@ -195,11 +195,15 @@ def open_request(request, pk):
     user = request.user
     if req.requester_id == user.pk:
         return redirect("exchange:request_detail", pk=pk)
-    if can(user, Action.APPROVE_REQUEST, req) and req.status in (RequestStatus.UNDER_REVIEW, RequestStatus.APPROVED,
-                                                                  RequestStatus.REJECTED):
+    approver = can(user, Action.APPROVE_REQUEST, req)
+    if approver and req.status in (RequestStatus.UNDER_REVIEW, RequestStatus.APPROVED, RequestStatus.REJECTED):
         return redirect("transfers:approval_detail", pk=pk)
     if can(user, Action.RESERVE_UNITS):
         return redirect("transfers:custodian_request", pk=pk)
+    if approver:
+        # The request has moved on (fulfilled, returned, cancelled): the approver still
+        # sees it read-only with its history; the decision buttons show only when UnderReview.
+        return redirect("transfers:approval_detail", pk=pk)
     raise PermissionDenied
 
 
