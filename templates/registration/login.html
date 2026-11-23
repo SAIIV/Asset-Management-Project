@@ -1,29 +1,50 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Sign in - Circular Campus{% endblock %}
 {% block sidebar %}{% endblock %}
+{% block main_class %}full{% endblock %}
+{% block topbar_action %}{% endblock %}
 {% block content %}
-<div class="signin">
-  <h1>Sign in</h1>
-  <div class="sub">Use your campus email and password.</div>
-
-  {% if form.non_field_errors %}
-    <div class="card form-error">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
-  {% endif %}
-
-  <form method="post" action="{% url 'login' %}" class="card">
-    {% csrf_token %}
-    <div class="field">
-      <label for="{{ form.username.id_for_label }}">Email</label>
-      {{ form.username }}
+<div class="signin-split">
+  <div class="signin-art"{% if campus_photo %} style="background-image: url('{% static campus_photo %}')"{% endif %}>
+    {% include "partials/rings.html" %}
+    <div class="logo-row">
+      <img class="cc" src="{% static 'img/logo.svg' %}" alt="Circular Campus">
+      {% if ku_logo %}<span class="divider"></span><img class="ku" src="{% static ku_logo %}" alt="Khalifa University">{% endif %}
     </div>
-    <div class="field">
-      <label for="{{ form.password.id_for_label }}">Password</label>
-      {{ form.password }}
+    <div>
+      <span class="eyebrow">Circular Campus</span>
+      <h1>Welcome back.</h1>
+      <p>Find, request and pass on campus equipment, with every step approved and recorded.</p>
     </div>
-    <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit" class="btn primary">Sign in</button>
-  </form>
+  </div>
 
-  <p class="kpi">Test accounts are listed in the README (synthetic data only).</p>
+  <div class="signin-form">
+    <div class="signin">
+      <h1>Sign in</h1>
+      <div class="sub">Use your campus email and password.</div>
+
+      {% if form.non_field_errors %}
+        <div class="card form-error">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}" class="card">
+        {% csrf_token %}
+        <div class="field">
+          <label for="{{ form.username.id_for_label }}">Email</label>
+          {{ form.username }}
+        </div>
+        <div class="field">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          {{ form.password }}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn primary">Sign in</button>
+      </form>
+
+      <p class="kpi" style="margin-top: 1.5rem">No account yet? The Administrator creates accounts.
+        Test accounts are listed in the README (synthetic data only).</p>
+    </div>
+  </div>
 </div>
 {% endblock %}

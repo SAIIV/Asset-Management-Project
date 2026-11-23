@@ -123,3 +123,17 @@ def recent_activity(user, limit=8):
         what = "" if row.record_type in ("Report", "User", "") else f"{LABELS.get(row.record_type, row.record_type)} #{row.record_id}"
         out.append({"who": row.user.name, "verb": verb, "what": what, "when": row.created_at})
     return out
+
+
+def intro_stats():
+    """Three live figures for the introductory page. Counts only, nothing about people."""
+    from assets.models import Department
+    from circular_campus.choices import TransferStatus
+    from exchange.catalogue import catalogue
+    from transfers.models import Transfer
+
+    return [
+        (catalogue().count(), "items offered for reuse right now"),
+        (Transfer.objects.filter(status=TransferStatus.RECEIVED).count(), "items already moved to a new home"),
+        (Department.objects.count(), "departments taking part"),
+    ]

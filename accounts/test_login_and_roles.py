@@ -75,14 +75,18 @@ class SignInTests(TestCase):
         self.assertTrue(AuditLog.objects.filter(action="sign_in", user__email=SEEDED["Approver"]).exists())
         self.client.post(reverse("logout"))
         self.assertTrue(AuditLog.objects.filter(action="sign_out").exists())
-        self.assertRedirects(self.client.get(reverse("home")), f"{reverse('login')}?next=/")
+        self.assertNotContains(self.client.get(reverse("home")), "What your role can do")  # intro page again
 
     def test_sign_out_needs_post(self):
         self.client.post(reverse("login"), {"username": SEEDED["Approver"], "password": PASSWORD})
         self.assertEqual(self.client.get(reverse("logout")).status_code, 405)
 
-    def test_home_needs_sign_in(self):
-        self.assertRedirects(self.client.get(reverse("home")), f"{reverse('login')}?next=/")
+    def test_signed_out_visitors_see_the_intro_page(self):
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, "intro-hero")
+        self.assertContains(response, f'href="{reverse("login")}"')
+        self.assertNotContains(response, "What your role can do")
+        self.assertRedirects(self.client.get(reverse("exchange:catalogue")), f"{reverse('login')}?next=/catalogue/")
 
     def test_start_page_lists_what_the_role_can_do(self):
         self.client.post(reverse("login"), {"username": SEEDED["Custodian"], "password": PASSWORD})
