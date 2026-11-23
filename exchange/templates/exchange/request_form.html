@@ -25,9 +25,14 @@
     {% include "assets/_field.html" with field=form.mandatory_specs_text %}
     {% include "assets/_field.html" with field=form.preferred_condition %}
   </div>
-  {# Mockup 2 shows AI-ranked matches here; AI #2 (Ali) adds them later. Until then the requester picks from the catalogue. #}
-  <div class="down">Ranked matches are not connected yet. Pick candidates from the catalogue list below, or leave it empty.</div>
-  {% include "assets/_field.html" with field=form.candidates %}
+  {{ form.ai_record }}
+  {% if ranking %}
+    {% include "exchange/_ranking.html" %}
+  {% else %}
+    {% if not editing %}<p class="kpi">Press <b>Find matches</b> to rank the catalogue items for your purpose, or pick candidates from the list below, or leave it empty.</p>{% endif %}
+    {% include "assets/_field.html" with field=form.candidates %}
+  {% endif %}
+  {% if not editing %}<button type="submit" name="find_matches" value="1" class="btn">Find matches</button>{% endif %}
   <div class="form-actions">
     {% if editing %}
       <button type="submit" class="btn primary">Save changes</button>

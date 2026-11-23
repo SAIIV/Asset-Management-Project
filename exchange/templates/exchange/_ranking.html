@@ -1,0 +1,50 @@
+{% load static %}
+{# AI #2 ranking panel (Mockup 2, Section 11.3). Ticking units here is the requester's own choice (gate 2). #}
+{% if ranking.fallback %}
+<div class="down">{{ ranking.message }}</div>
+<div class="field">
+  <label>Candidate assets (optional), not ranked</label>
+  <div data-pager="5">
+  {% for m in ranking.matches %}
+  <div data-pager-item><label class="inline-form"><input type="checkbox" name="candidates" value="{{ m.asset.pk }}"{% if m.asset.pk in ticked %} checked{% endif %}>
+    {{ m.asset.name }} · {{ m.asset.get_condition_display }} · {{ m.asset.owner_department.name }}</label></div>
+  {% empty %}
+  <p class="kpi">No eligible units in the catalogue.</p>
+  {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card ai">
+  <span class="tag ai">AI ranking</span> {{ ranking.matches|length }} eligible unit{{ ranking.matches|length|pluralize }}, best first. Tick the ones you want; nothing is chosen for you.
+  {% for warning in ranking.warnings %}<p class="kpi"><span class="tag warn">Warning</span> {{ warning }}</p>{% endfor %}
+
+  <div data-pager="5">
+  {% for m in ranking.matches %}
+  <div class="card" data-pager-item>
+    <label class="inline-form" style="font-size:14px;color:inherit">
+      <input type="checkbox" name="candidates" value="{{ m.asset.pk }}"{% if m.asset.pk in ticked %} checked{% endif %}>
+      #{{ m.rank }} {{ m.asset.name }}</label>
+    · {{ m.asset.owner_department.name }} · {{ m.asset.get_condition_display }}
+    <span class="tag {% if m.label == 'Strong match' %}ok{% else %}warn{% endif %}">{{ m.score }} / 100 · {{ m.label }}</span>
+    {% if ranking.top_pick and m == ranking.top_pick %}<span class="tag ai">Top pick</span>{% endif %}
+    {% for warning in m.warnings %}{% if warning != "Weak match" %}<span class="tag warn">{{ warning }}</span>{% endif %}{% endfor %}
+    {% if m.reasons %}<p class="kpi">In plain words: {{ m.reasons|join:"; " }}.</p>{% endif %}
+    {% for letter, label, weight, value, pct in m.bars %}
+    <div class="bar-row"><span style="width:190px">{{ letter }} {{ label }} ({{ weight }})</span>
+      {% if value is None %}<span class="kpi">not compared</span>{% else %}<div class="bar"><i style="width:{{ pct }}%"></i></div><span>{{ value|floatformat:2 }}</span>{% endif %}</div>
+    {% endfor %}
+  </div>
+  {% empty %}
+  <p class="kpi">No eligible units match your mandatory specifications.</p>
+  {% endfor %}
+  </div>
+
+  {% if ranking.excluded %}
+  <p class="kpi">Left out by the mandatory rules (similarity cannot bring them back):
+    {% for asset, reason in ranking.excluded %}{{ asset.name }} ({{ reason }}){% if not forloop.last %}; {% endif %}{% endfor %}.</p>
+  {% endif %}
+  {% for letter, reason in ranking.dropped.items %}<p class="kpi">{{ letter }} not compared: {{ reason }}. Its weight was shared out over the other factors.</p>{% endfor %}
+  <p class="kpi">Score = 100 × weighted sum of the factors (Section 11). Similarity comes from the local all-MiniLM-L6-v2 model and is not a probability. Ranking version: weighted score v1.</p>
+</div>
+{% endif %}
+<script src="{% static 'js/pager.js' %}" defer></script>
