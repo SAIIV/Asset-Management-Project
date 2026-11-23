@@ -96,12 +96,16 @@ ACTION_WORDS = {
     "change_custody": "took over", "cannot_supply": "said they cannot supply", "report_fault": "reported a fault on",
     "publish_summary": "published a sustainability summary", "export_report": "exported a report",
     "edit_profile": "updated their profile", "change_password": "changed their password",
+    "start_repair": "started the repair of", "finish_repair": "finished the repair of", "close_fault": "closed",
+    "propose_lifecycle": "proposed retiring", "authorize_lifecycle": "approved", "reject_lifecycle": "rejected",
+    "execute_lifecycle": "carried out", "cancel_lifecycle": "withdrew",
 }
 #: Internal steps that repeat a main step above (the same click), left out of the feed.
 HIDDEN = ["sign_in", "sign_out", "sign_in_failed", "reserve_asset", "release_asset", "receive_asset",
           "consume_reservation", "release_reservation", "schedule_transfer", "decide_approval",
-          "fulfil_request", "approve", "create", "update", "correct", "fix"]
-LABELS = {"ResourceRequest": "Request", "Transfer": "Transfer", "Asset": "Asset", "Approval": "Approval"}
+          "fulfil_request", "approve", "create", "update", "correct", "fix", "retire_asset"]
+LABELS = {"ResourceRequest": "Request", "Transfer": "Transfer", "Asset": "Asset", "Approval": "Approval",
+          "MaintenanceRecord": "Fault", "LifecycleAction": "Retirement proposal"}
 
 
 def recent_activity(user, limit=8):

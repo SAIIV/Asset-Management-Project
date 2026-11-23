@@ -101,7 +101,24 @@ def asset_detail(request, pk):
         "moves": custodian_moves(asset),
         "move_choices": [(state, AssetStatus(state).label, event) for state, event in custodian_moves(asset).items()],
         "history": history_of("Asset", asset.pk)[:5],
+        **_maintenance_context(request.user, asset),
     })
+
+
+def _maintenance_context(user, asset):
+    """Open fault / open proposal for the "Faults and retirement" card (UC-19, UC-23)."""
+    from accounts.permissions import can
+    from circular_campus.choices import LifecycleActionType
+
+    from .maintenance import OPEN_FAULTS, OPEN_PROPOSALS, RETIRABLE
+    from .models import LifecycleAction, MaintenanceRecord
+
+    return {
+        "open_fault": MaintenanceRecord.objects.filter(asset=asset, status__in=OPEN_FAULTS).first(),
+        "open_proposal": LifecycleAction.objects.filter(asset=asset, status__in=OPEN_PROPOSALS).first(),
+        "can_retire": asset.status in RETIRABLE and can(user, Action.PROPOSE_LIFECYCLE, asset),
+        "lifecycle_kinds": LifecycleActionType.choices,
+    }
 
 
 @permission_required(Action.REGISTER_ASSET, record=_load_asset)

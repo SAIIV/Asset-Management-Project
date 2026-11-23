@@ -13,6 +13,7 @@ urlpatterns = [
     path("", include("exchange.urls")),
     path("transfers/", include("transfers.urls")),
     path("reports/", include("reports.urls")),
+    path("maintenance/", include("assets.maintenance_urls")),
 
 
 

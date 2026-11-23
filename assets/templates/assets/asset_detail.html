@@ -86,6 +86,40 @@
     <p class="help">Only the moves of the asset state diagram (Design Document Figure 56) are offered.</p>
   </div>
   <div class="card">
+    <h2>Faults and retirement</h2>
+    {% if open_fault %}
+      <p><span class="tag warn">Open fault</span> {{ open_fault.action }} ({{ open_fault.get_status_display }}).
+        <a href="{% url 'maintenance:list' %}">Manage it on the Maintenance page</a>.</p>
+    {% elif asset.status != "Retired" and asset.status != "Draft" %}
+      <form method="post" action="{% url 'maintenance:report' %}" class="asset-form">{% csrf_token %}
+        <input type="hidden" name="asset" value="{{ asset.pk }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div class="field"><label for="id_fault">Report a fault</label>
+          <input type="text" name="description" id="id_fault" maxlength="500" placeholder="e.g. hinge broken" required></div>
+        <button type="submit" class="btn">Report fault</button>
+      </form>
+    {% endif %}
+    {% if open_proposal %}
+      <p><span class="tag warn">{{ open_proposal.get_action_display }} {{ open_proposal.get_status_display|lower }}</span>
+        {{ open_proposal.reason }}. <a href="{% url 'maintenance:list' %}">See it on the Maintenance page</a>.</p>
+    {% elif can_retire %}
+      <form method="post" action="{% url 'maintenance:propose' asset.pk %}" class="asset-form">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div class="field"><label for="id_kind">Retire this item</label>
+          <select name="kind" id="id_kind" required>
+            <option value="">Choose donation, recycling or disposal…</option>
+            {% for value, label in lifecycle_kinds %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><input type="text" name="reason" maxlength="300" placeholder="Reason, e.g. beyond economic repair" required></div>
+        <button type="submit" class="btn">Send to an approver</button>
+        <p class="help">An approver must agree before the item is retired. It leaves the catalogue while the proposal is open.</p>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
     <h2>History</h2>
     {% include "assets/_history_rows.html" with events=history %}
     <p><a href="{% url 'assets:history' asset.pk %}">Full history</a></p>
