@@ -29,14 +29,14 @@ def _check(user, action, record):
         raise PermissionDenied
 
 
-def _run(request, step, done):
+def _run(request, step, done, use_next=True):
     try:
         step()
     except (MaintenanceError, IllegalMove) as error:
         messages.error(request, str(error))
     else:
         messages.success(request, done)
-    target = request.POST.get("next", "")
+    target = request.POST.get("next", "") if use_next else ""
     if target and url_has_allowed_host_and_scheme(target, {request.get_host()}, request.is_secure()):
         return redirect(target)
     return redirect("maintenance:list")
@@ -82,8 +82,12 @@ def report_fault(request):
     asset = get_object_or_404(Asset, pk=request.POST.get("asset") or 0)
     if asset.owner_department_id != request.user.department_id and not asset.is_listed:
         raise PermissionDenied  # you can report items you hold, or items you can see in the catalogue
+    # A report takes the item off the catalogue, so someone from another department cannot go back to its
+    # catalogue page; they see their report under "Faults I reported" instead.
+    own = asset.owner_department_id == request.user.department_id and "/catalogue/" not in request.POST.get("next", "")
     return _run(request, lambda: MaintenanceService.report_fault(request.user, asset, request.POST.get("description")),
-                "Fault reported. The custodian of the item has been told.")
+                "Fault reported. The custodian of the item has been told, and it is off the catalogue until "
+                "it is checked.", use_next=own)
 
 
 def _record(request, pk):

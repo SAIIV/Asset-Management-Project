@@ -43,6 +43,11 @@ def publish_problems(asset):
         problems.append("it needs repair, so it is not serviceable")
     if asset.serviceability is False:
         problems.append("the last inspection marked it not serviceable")
+    if asset.pk:
+        from assets.maintenance import hold_reason  # open fault or retirement proposal (UC-19, UC-23)
+        held = hold_reason(asset)
+        if held:
+            problems.append(held)
     return problems
 
 

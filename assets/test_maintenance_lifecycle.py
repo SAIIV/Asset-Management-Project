@@ -62,11 +62,12 @@ class FaultTests(Setup):
         MaintenanceService.finish_repair(self.custodian, record)
         self.assertEqual(self.status(self.chair), A.IN_USE)
 
-    def test_reserved_item_is_not_moved(self):
-        Asset.objects.filter(pk=self.chair.pk).update(status=A.RESERVED)
+    def test_item_in_transit_waits_for_the_receiver(self):
+        Asset.objects.filter(pk=self.chair.pk).update(status=A.IN_TRANSIT)
         record = MaintenanceService.report_fault(self.requester, self.chair, "scratched")
-        with self.assertRaisesMessage(MaintenanceError, "Finish its request"):
+        with self.assertRaisesMessage(MaintenanceError, "on its way"):
             MaintenanceService.start_repair(self.custodian, record)
+        self.assertEqual(self.status(self.chair), A.IN_TRANSIT)
 
     def test_negative_cost_and_closing_without_reason_are_refused(self):
         record = MaintenanceService.report_fault(self.requester, self.chair, "wobbly")

@@ -99,11 +99,12 @@ ACTION_WORDS = {
     "start_repair": "started the repair of", "finish_repair": "finished the repair of", "close_fault": "closed",
     "propose_lifecycle": "proposed retiring", "authorize_lifecycle": "approved", "reject_lifecycle": "rejected",
     "execute_lifecycle": "carried out", "cancel_lifecycle": "withdrew",
+    "return_request": "put back to Submitted",
 }
 #: Internal steps that repeat a main step above (the same click), left out of the feed.
 HIDDEN = ["sign_in", "sign_out", "sign_in_failed", "reserve_asset", "release_asset", "receive_asset",
           "consume_reservation", "release_reservation", "schedule_transfer", "decide_approval",
-          "fulfil_request", "approve", "create", "update", "correct", "fix", "retire_asset"]
+          "fulfil_request", "approve", "create", "update", "correct", "fix", "retire_asset", "invalidate_approval"]
 LABELS = {"ResourceRequest": "Request", "Transfer": "Transfer", "Asset": "Asset", "Approval": "Approval",
           "MaintenanceRecord": "Fault", "LifecycleAction": "Retirement proposal"}
 

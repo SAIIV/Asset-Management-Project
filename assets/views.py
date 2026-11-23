@@ -98,7 +98,7 @@ def asset_detail(request, pk):
         "kind_label": KIND_LABELS[kind],
         "details": details_of(asset, kind),
         "locked": asset.status in LOCKED_STATUSES,
-        "moves": custodian_moves(asset),
+        "moves": {} if _repair_in_progress(asset) else custodian_moves(asset),
         "move_choices": [(state, AssetStatus(state).label, event) for state, event in custodian_moves(asset).items()],
         "history": history_of("Asset", asset.pk)[:5],
         **_maintenance_context(request.user, asset),
@@ -121,6 +121,14 @@ def _maintenance_context(user, asset):
     }
 
 
+def _repair_in_progress(asset):
+    from circular_campus.choices import MaintenanceStatus
+
+    from .models import MaintenanceRecord
+
+    return MaintenanceRecord.objects.filter(asset=asset, status=MaintenanceStatus.IN_PROGRESS).exists()
+
+
 @permission_required(Action.REGISTER_ASSET, record=_load_asset)
 def asset_move(request, pk):
     """C6: change the status by hand, only along an arrow of the asset state diagram (Figure 56)."""
@@ -133,6 +141,10 @@ def asset_move(request, pk):
         return redirect("assets:detail", pk=asset.pk)
     # Only the moves offered on the page; reserve, release, receive and retire
     # are made by the request and transfer services, not typed in here.
+    if _repair_in_progress(asset):
+        messages.error(request, "A repair of this item is in progress. Finish it on the Maintenance page; "
+                                "that also sets the status.")
+        return redirect("assets:detail", pk=asset.pk)
     if new_status not in custodian_moves(asset):
         messages.error(request, f"An asset that is {asset.get_status_display()} cannot be moved to "
                                 f"“{new_status or 'nothing'}” from this page.")

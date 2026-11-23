@@ -57,11 +57,12 @@
         <td><span class="tag warn">{{ r.get_status_display }}</span></td>
         <td>
           {% if r.status == "Reported" %}
-            {% if r.asset.status == "Available" or r.asset.status == "InUse" %}
+            {% if r.asset.status == "InTransit" %}
+            <p class="kpi">Waiting: the item is on its way to another department, which repairs it after confirming receipt.</p>
+            {% else %}
             <form method="post" action="{% url 'maintenance:start' r.pk %}" class="inline-form">{% csrf_token %}
               <button class="btn primary" type="submit">Start repair</button></form>
-            {% else %}
-            <p class="kpi">Waiting: the item is {{ r.asset.get_status_display }}. Start the repair once its request or transfer is finished, or close the fault.</p>
+            {% if r.asset.status == "Reserved" %}<p class="kpi">Starting the repair frees the item from the request it is reserved for; the requester is told.</p>{% endif %}
             {% endif %}
             <form method="post" action="{% url 'maintenance:close' r.pk %}" class="inline-form">{% csrf_token %}
               <input type="text" name="reason" placeholder="Reason, e.g. no fault found" required style="max-width:200px">

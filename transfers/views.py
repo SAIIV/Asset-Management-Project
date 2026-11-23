@@ -22,6 +22,7 @@ from accounts.decorators import permission_required
 from accounts.models import AuditLog
 
 from accounts.permissions import Action, can
+from assets.maintenance import without_held
 from assets.models import Asset
 from assets.states import history_of
 from circular_campus.choices import ApprovalDecision, AssetStatus, Condition, RequestStatus, TransferStatus
@@ -81,7 +82,8 @@ def cannot_supply(request, pk):
 def custodian_request(request, pk):
     """UC-13 Reserve eligible assets: show the request and the Available units of my department."""
     req = _load_request(request, pk)
-    units = Asset.objects.filter(owner_department_id=request.user.department_id, status=AssetStatus.AVAILABLE)
+    units = without_held(Asset.objects.filter(owner_department_id=request.user.department_id,
+                                              status=AssetStatus.AVAILABLE))  # no open fault or retirement
     chosen = {a.pk for a in candidates_of(req)}
     if request.method == "POST":
         ids = [int(i) for i in request.POST.getlist("assets") if i.isdigit()]

@@ -28,6 +28,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from accounts.services import AuditService
+from assets.maintenance import hold_reason
 from assets.models import Asset
 from assets.states import StateService
 from circular_campus.choices import (
@@ -95,6 +96,9 @@ class TransferService:
             if asset.status != AssetStatus.AVAILABLE:
                 raise TransferError(f"“{asset.name}” is {asset.get_status_display()} now, so nothing was reserved. "
                                     f"Please choose again.")
+            held = hold_reason(asset)
+            if held:
+                raise TransferError(f"“{asset.name}” cannot be reserved because {held}. Nothing was reserved.")
         try:
             with transaction.atomic():
                 for asset in locked:
