@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Maintenance - Circular Campus{% endblock %}
+{% block nav_maintenance %}on{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>Maintenance and lifecycle</h1>
+    <div class="hero-sub">Report faults, track repairs, and donate, recycle or dispose of items (UC-19 to UC-25).</div>
+  </div>
+</section>
+
+{% if my_items is not None %}
+<div class="two-col">
+  <div class="card">
+    <h2>Report a fault</h2>
+    {% if my_items %}
+    <form method="post" action="{% url 'maintenance:report' %}">{% csrf_token %}
+      <div class="field">
+        <label for="id_asset">Item</label>
+        <select name="asset" id="id_asset" required>
+          <option value="">Choose an item of your department…</option>
+          {% for a in my_items %}<option value="{{ a.pk }}">#{{ a.pk }} {{ a.name }} ({{ a.get_status_display }})</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="id_description">What is wrong?</label>
+        <textarea name="description" id="id_description" rows="3" maxlength="500" required placeholder="e.g. screen flickers after 10 minutes"></textarea>
+      </div>
+      <button type="submit" class="btn primary">Report fault</button>
+    </form>
+    {% else %}<p class="kpi">Your department has no items yet.</p>{% endif %}
+  </div>
+  <div class="card">
+    <h2>Faults I reported</h2>
+    {% if reported %}
+    <ul class="feed">
+      {% for r in reported %}<li><strong>{{ r.asset.name }}</strong>: {{ r.action }}
+        <span class="when">{{ r.reported_at|date:"j M Y" }} · <span class="tag{% if r.status == 'Completed' %} ok{% elif r.status == 'Cancelled' %}{% else %} warn{% endif %}">{{ r.get_status_display }}</span></span></li>{% endfor %}
+    </ul>
+    {% else %}<p class="kpi">You have not reported any faults.</p>{% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if open_faults is not None %}
+<div class="card">
+  <h2>Faults on our items</h2>
+  {% if open_faults %}
+  <table>
+    <thead><tr><th>Item</th><th>Fault</th><th>Reported</th><th>Status</th><th>Next step</th></tr></thead>
+    <tbody>
+    {% for r in open_faults %}
+      <tr>
+        <td><a href="{% url 'assets:detail' r.asset.pk %}">{{ r.asset.name }}</a><br><span class="kpi">{{ r.asset.get_status_display }}</span></td>
+        <td>{{ r.action }}</td>
+        <td>{{ r.reported_at|date:"j M Y" }}{% if r.reporter %}<br><span class="kpi">by {{ r.reporter.name }}</span>{% endif %}</td>
+        <td><span class="tag warn">{{ r.get_status_display }}</span></td>
+        <td>
+          {% if r.status == "Reported" %}
+            {% if r.asset.status == "InTransit" %}
+            <p class="kpi">Waiting: the item is on its way to another department, which repairs it after confirming receipt.</p>
+            {% else %}
+            <form method="post" action="{% url 'maintenance:start' r.pk %}" class="inline-form">{% csrf_token %}
+              <button class="btn primary" type="submit">Start repair</button></form>
+            {% if r.asset.status == "Reserved" %}<p class="kpi">Starting the repair frees the item from the request it is reserved for; the requester is told.</p>{% endif %}
+            {% endif %}
+            <form method="post" action="{% url 'maintenance:close' r.pk %}" class="inline-form">{% csrf_token %}
+              <input type="text" name="reason" placeholder="Reason, e.g. no fault found" required style="max-width:200px">
+              <button class="btn" type="submit">Close</button></form>
+          {% else %}
+            <form method="post" action="{% url 'maintenance:finish' r.pk %}" class="inline-form">{% csrf_token %}
+              <input type="text" name="cost" placeholder="Cost AED (optional)" style="max-width:150px">
+              <input type="text" name="note" placeholder="What was done" style="max-width:200px">
+              <button class="btn primary" type="submit">Repair done</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="kpi">No open faults. Well done.</p>{% endif %}
+  {% if closed_faults %}
+  <h2>Recently closed</h2>
+  <ul class="feed">
+    {% for r in closed_faults %}<li>{{ r.asset.name }}: {{ r.action }}
+      <span class="when">{{ r.get_status_display }}{% if r.cost is not None %} · AED {{ r.cost }}{% endif %}{% if r.completed_at %} · {{ r.completed_at|date:"j M Y" }}{% endif %}</span></li>{% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if to_decide is not None %}
+<div class="card">
+  <h2>Proposals waiting for your decision</h2>
+  {% if to_decide %}
+  <table>
+    <thead><tr><th>Item</th><th>Action</th><th>Reason</th><th>Decision</th></tr></thead>
+    <tbody>
+    {% for p in to_decide %}
+      <tr>
+        <td>{{ p.asset.name }}<br><span class="kpi">{{ p.asset.owner_department.name }}</span></td>
+        <td><span class="tag">{{ p.get_action_display }}</span></td>
+        <td>{{ p.reason }}</td>
+        <td>
+          <form method="post" action="{% url 'maintenance:decide' p.pk %}" class="inline-form">{% csrf_token %}
+            <button class="btn primary" type="submit" name="decision" value="approve">Approve</button></form>
+          <form method="post" action="{% url 'maintenance:decide' p.pk %}" class="inline-form">{% csrf_token %}
+            <input type="text" name="reason" placeholder="Reason for rejecting" required style="max-width:200px">
+            <button class="btn danger" type="submit" name="decision" value="reject">Reject</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="kpi">Nothing to decide.</p>{% endif %}
+</div>
+{% endif %}
+
+{% if our_proposals is not None %}
+<div class="card">
+  <h2>Donation, recycling and disposal</h2>
+  <p class="kpi">Propose one from an item's page (Assets → the item → "Retire this item"). An approver who did not propose it decides; then you carry it out with evidence.</p>
+  {% if our_proposals %}
+  <table>
+    <thead><tr><th>Item</th><th>Action</th><th>Reason</th><th>Status</th><th>Next step</th></tr></thead>
+    <tbody>
+    {% for p in our_proposals %}
+      <tr>
+        <td><a href="{% url 'assets:detail' p.asset.pk %}">{{ p.asset.name }}</a></td>
+        <td><span class="tag">{{ p.get_action_display }}</span></td>
+        <td>{{ p.reason }}{% if p.execution_evidence %}<br><span class="kpi">Evidence: {{ p.execution_evidence }}</span>{% endif %}</td>
+        <td><span class="tag{% if p.status == 'Executed' or p.status == 'Approved' %} ok{% elif p.status == 'Rejected' %} bad{% elif p.status == 'Proposed' %} warn{% endif %}">{{ p.get_status_display }}</span></td>
+        <td>
+          {% if p.status == "Approved" %}
+            <form method="post" action="{% url 'maintenance:execute' p.pk %}" class="inline-form">{% csrf_token %}
+              <input type="text" name="evidence" placeholder="Evidence, e.g. receipt no." required style="max-width:200px">
+              <button class="btn primary" type="submit">Mark as done</button></form>
+          {% endif %}
+          {% if p.status == "Proposed" or p.status == "Approved" %}
+            <form method="post" action="{% url 'maintenance:cancel' p.pk %}" class="inline-form">{% csrf_token %}
+              <input type="hidden" name="reason" value="cancelled by the custodian">
+              <button class="btn" type="submit">Cancel</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="kpi">No proposals yet.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

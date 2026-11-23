@@ -26,7 +26,8 @@ class MenuTests(TestCase):
         self.assertIn(f'href="{reverse("exchange:catalogue")}"', page)
         self.assertNotIn(f'href="{reverse("assets:list")}"', page)
         self.assertNotIn(">Matches<", page)
-        self.assertNotIn(">Maintenance<", page)
+        self.assertIn(f'href="{reverse("maintenance:list")}"', page)  # requesters may report a fault (UC-19)
+        self.assertNotIn(f'href="{reverse("transfers:approvals")}"', page)
         self.assertNotIn('href="#"', page)
 
     def test_custodian_requests_link_goes_to_incoming(self):

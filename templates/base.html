@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Circular Campus{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/circular.css' %}">
+  <script src="{% static 'js/menu.js' %}" defer></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -21,8 +22,16 @@
         {% if user.department %}<span class="dept">{{ user.department.name }}</span> ·{% endif %}
         <span>{{ user.name }}</span>
         {% for role in user.roles.all %}<span class="role">{{ role }}</span>{% empty %}<span class="role">No role</span>{% endfor %}
-        <span class="avatar" title="{{ user.email }}">{{ user.initials }}</span>
-        <form method="post" action="{% url 'logout' %}" class="top-actions">{% csrf_token %}<button type="submit" class="btn">Sign out</button></form>
+        <details class="usermenu">
+          <summary aria-label="Account menu"><span class="avatar">{{ user.initials }}</span></summary>
+          <div class="usermenu-panel">
+            <div class="usermenu-head"><strong>{{ user.name }}</strong><span>{{ user.email }}</span></div>
+            <a href="{% url 'account' %}">My account</a>
+            <a href="{% url 'notifications:inbox' %}">Inbox{% if unread_count %} ({{ unread_count }} unread){% endif %}</a>
+            <a href="{% url 'home' %}">Start page</a>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sign out</button></form>
+          </div>
+        </details>
       {% else %}
         <span class="role">Not signed in</span>
       {% endif %}
@@ -41,8 +50,10 @@
       {% if 'approve_request' in allowed %}<a href="{% url 'transfers:approvals' %}" class="{% block nav_approvals %}{% endblock %}">Approvals</a>{% endif %}
       {% if 'run_reports' in allowed %}<a href="{% url 'reports:operational' %}" class="{% block nav_reports %}{% endblock %}">Reports</a>{% endif %}
       {% if 'view_sustainability' in allowed %}<a href="{% url 'reports:sustainability' %}" class="{% block nav_sustainability %}{% endblock %}">Sustainability</a>{% endif %}
+      {% if user.is_authenticated %}<a href="{% url 'assistant:page' %}" class="{% block nav_assistant %}{% endblock %}">Assistant</a>{% endif %}
       {% if user.is_authenticated %}<a href="{% url 'notifications:inbox' %}" class="{% block nav_inbox %}{% endblock %}">Inbox{% if unread_count %} <span class="tag ai">{{ unread_count }}</span>{% endif %}</a>{% endif %}
-      {# Matches now sit inside the request form (AI #2); Maintenance is a later increment, so neither has a menu link. #}
+      {% if 'report_fault' in allowed or 'propose_lifecycle' in allowed or 'authorize_lifecycle' in allowed %}<a href="{% url 'maintenance:list' %}" class="{% block nav_maintenance %}{% endblock %}">Maintenance</a>{% endif %}
+      {# Matches sit inside the request form (AI #2), so they have no menu link. #}
     </nav>
     {% endblock %}
 

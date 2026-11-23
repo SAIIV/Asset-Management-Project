@@ -31,6 +31,16 @@
     {% if "submit_request" in allowed and asset.owner_department_id != user.department_id %}
       <p><a class="btn primary" href="{% url 'exchange:request_create' %}?asset={{ asset.pk }}">Request this item</a></p>
     {% endif %}
+    {% if "report_fault" in allowed %}
+      <details><summary class="kpi">Something wrong with this item? Report a fault</summary>
+        <form method="post" action="{% url 'maintenance:report' %}" class="asset-form">{% csrf_token %}
+          <input type="hidden" name="asset" value="{{ asset.pk }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <div class="field"><input type="text" name="description" maxlength="500" placeholder="e.g. listed as working but does not power on" required></div>
+          <button type="submit" class="btn">Report fault</button>
+        </form>
+      </details>
+    {% endif %}
 
   </div>
 </div>

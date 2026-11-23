@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Assistant - Circular Campus{% endblock %}
+{% block nav_assistant %}on{% endblock %}
+{% block extra_head %}
+<style>
+  .chat { display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+  .bubble { border-radius: 12px; padding: 10px 14px; max-width: 85%; line-height: 1.45; }
+  .bubble.you { align-self: flex-end; background: var(--blue); color: #fff; }
+  .bubble.bot { align-self: flex-start; background: #f4fbfd; border: 2px solid var(--ai-card); }
+  .bubble .kpi { margin-top: 6px; }
+  .bubble ul { margin: 6px 0 0 18px; padding: 0; }
+  .ask-box { display: flex; gap: 8px; max-width: 760px; margin-top: 12px; }
+  .ask-box input[type=text] { flex: 1; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 14px; }
+  .examples button { font-size: 12.5px; }
+</style>
+{% endblock %}
+{% block content %}
+<h1>Assistant <span class="tag ai">AI</span></h1>
+<p class="sub">Ask in plain words about items you can request, your own requests, or how to do something.
+  The assistant only explains and points you to a page; it never changes anything.</p>
+
+{% if not chat %}
+  <div class="examples">
+    {% for example in examples %}
+      <form method="post">{% csrf_token %}<button type="submit" class="btn" name="question" value="{{ example }}">{{ example }}</button></form>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="chat">
+  {% for turn in chat %}
+    <div class="bubble you">{{ turn.q }}</div>
+    <div class="bubble bot"{% if forloop.last %} id="latest"{% endif %}>
+      {% if turn.fallback %}
+        <div class="down">{{ turn.message }}</div>
+      {% else %}
+        {{ turn.a|linebreaksbr }}
+      {% endif %}
+      {% if turn.items %}
+        <ul>{% for item in turn.items %}<li><a href="{% url 'exchange:catalogue_detail' item.id %}">{{ item.name }}</a> <span class="kpi">({{ item.dept }})</span></li>{% endfor %}</ul>
+      {% endif %}
+      {% if turn.page %}<p style="margin-top:8px"><a class="btn" href="{{ turn.page.1 }}">{{ turn.page.0 }} &rarr;</a></p>{% endif %}
+      {% if not turn.fallback %}
+        <div class="kpi">Answered by {{ turn.model }} from Circular Campus data only.
+          {% if turn.rated %}<span class="tag">{{ turn.rated }}</span>{% else %}Was this helpful?{% endif %}</div>
+        {% if not turn.rated %}
+          <form method="post" action="{% url 'assistant:rate' turn.record_id %}" class="inline-form" style="margin-top:6px">{% csrf_token %}
+            <button type="submit" name="helpful" value="yes" class="btn">Helpful</button>
+            <button type="submit" name="helpful" value="no" class="btn">Not helpful</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+<form method="post" class="ask-box">{% csrf_token %}
+  <input type="text" name="question" maxlength="{{ max_length }}" placeholder="Ask a question..." aria-label="Your question" required autofocus>
+  <button type="submit" class="btn primary">Ask</button>
+</form>
+{% if chat %}
+  <form method="post" style="margin-top:8px">{% csrf_token %}<button type="submit" name="clear" value="1" class="btn">Clear chat</button></form>
+{% endif %}
+<p class="kpi" style="margin-top:10px">Your question and the item ids found go to the AI service; your name and e-mail do not.</p>
+{% endblock %}

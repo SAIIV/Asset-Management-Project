@@ -2,14 +2,60 @@
 {% block title %}Start - Circular Campus{% endblock %}
 {% block nav_dashboard %}on{% endblock %}
 {% block content %}
-<h1>Welcome, {{ user.name }}</h1>
-<div class="sub">
-  {% if user.department %}{{ user.department.name }} · {% endif %}
-  {% for role in user.roles.all %}<span class="tag ai">{{ role }}</span>{% empty %}<span class="tag warn">No role assigned</span>{% endfor %}
+<section class="hero">
+  <div>
+    <h1>Welcome, {{ user.name }}</h1>
+    <div class="hero-sub">
+      {% if user.department %}{{ user.department.name }} · {% endif %}
+      {% for role in user.roles.all %}<span class="tag">{{ role }}</span>{% empty %}<span class="tag warn">No role assigned</span>{% endfor %}
+    </div>
+  </div>
+  {% if quick %}
+  <div class="hero-actions">
+    {% for label, url, primary in quick %}<a class="btn{% if primary %} primary{% endif %}" href="{{ url }}">{{ label }}</a>{% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+{% if tiles %}
+<div class="tiles">
+  {% for t in tiles %}
+  <a class="tile {{ t.tone }}" href="{{ t.url }}">
+    <span class="tile-label">{{ t.label }}</span>
+    <span class="tile-num">{{ t.value }}</span>
+    <span class="tile-hint">{{ t.hint }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="two-col">
+  <div class="card">
+    <h2>Notices</h2>
+    {% if notices %}
+    <ul class="feed">
+      {% for note in notices %}
+      <li class="{% if not note.read_at %}unread{% endif %}">{{ note.message }}
+        <span class="when">{{ note.created_at|date:"j M Y, H:i" }}{% if note.about %} · {{ note.about }}{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+    <a class="btn" href="{% url 'notifications:inbox' %}">Open inbox</a>
+    {% else %}<p class="kpi">No messages yet.</p>{% endif %}
+  </div>
+  <div class="card">
+    <h2>Recent activity</h2>
+    {% if activity %}
+    <ul class="feed">
+      {% for a in activity %}
+      <li><strong>{{ a.who }}</strong> {{ a.verb }} {{ a.what }}<span class="when">{{ a.when|date:"j M Y, H:i" }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="kpi">Nothing has happened in your department yet.</p>{% endif %}
+  </div>
 </div>
 
-<div class="card">
-  <h2>What your role can do</h2>
+<details class="card">
+  <summary><strong>What your role can do</strong> <span class="kpi">({{ actions|length }} actions)</span></summary>
   {% if actions %}
     <ul class="can-list">
       {% for action in actions %}<li><span class="tag ok">Allowed</span> {{ action.label }}</li>{% endfor %}
@@ -19,5 +65,5 @@
   {% else %}
     <p>Your account has no role yet. Ask the Administrator to assign one.</p>
   {% endif %}
-</div>
+</details>
 {% endblock %}
