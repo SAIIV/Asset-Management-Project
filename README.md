@@ -30,14 +30,14 @@ The full design is in [docs/phase-4-5/](docs/phase-4-5/) and the Phase 6 plan
 circular_campus/   Project settings and top-level URLs
 accounts/          Accounts & Administration: users, roles, audit log      (Ali)
 assets/            Assets & Catalogue: departments, categories, assets    (Saeed)
-exchange/          Search & Requests: requests, match recommendations     (Abdullah, Ali)
+exchange/          Search & Requests: catalogue, requests, matches        (Ali, Humaid)
 transfers/         Reservations, approvals and transfers                  (Humaid)
-reports/           Sustainability dashboard, reports, CSV export          (Saeed, Abdullah)
-notifications/     In-app notifications                                   (Abdullah)
-ai/                AI gateway, AI services and AI records                 (Humaid, Ali)
+reports/           Sustainability dashboard, reports, CSV export          (Saeed)
+notifications/     In-app notifications                                   (Saeed)
+ai/                AI gateway, AI services and AI records                 (Humaid, Ali, Saeed)
 docs/              Phase reports, design document and meeting notes
 templates/         Shared page layout (base.html)
-static/css/        The one shared stylesheet (circular.css)
+static/            The shared stylesheet (css/circular.css) and list paging (js/pager.js)
 docker-compose.yml PostgreSQL 16 + pgvector database for local development
 requirements.txt   Python packages, same versions for everyone
 .env.example       Template for your local .env file (no real keys)
@@ -118,7 +118,21 @@ You need: Python 3.12, Git, Docker Desktop and VS Code.
    after `python manage.py runserver`. To start again from an empty database:
    `docker compose down -v`, `docker compose up -d`, `migrate`, `seed_data`.
 
-More setup steps are added as they land.
+8. AI features. The category suggestions (AI #1) and matching (AI #2) run on
+   this PC with the all-MiniLM-L6-v2 model; it is downloaded once (about 90 MB)
+   the first time it is used. The report summary (AI #5) uses the Google Gemini
+   API (free tier). Create a key at https://aistudio.google.com/apikey and put
+   these lines in your `.env`:
+
+   ```text
+   AI_TEXT_PROVIDER=gemini
+   GEMINI_API_KEY=your-key
+   GEMINI_MODEL=gemini-flash-lite-latest
+   ```
+
+   Restart `runserver` after changing `.env`. Without a key, or with
+   `AI_TEXT_PROVIDER=off`, every page still works and the summary box says
+   "Draft summary unavailable". The tests never call Gemini.
 
 ## Data model
 
@@ -241,7 +255,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the Git workflow.
 
 | Member | Student ID | Phase 6 features |
 |---|---|---|
-| Saeed Alkaabi | 100063100 | Project setup and data model, C2 Departments and assets, C7 Dashboard, AI #5 Report summary |
-| Ali Alawadhi | 100063186 | C1 Login and roles, C6 States and history, AI #2 Matching and ranking |
-| Humaid Al Ali | 100062914 | AI gateway, AI #1 Classification, C5 Approve and transfer |
-| Abdullah Alblooshi | 100061739 | C3 Publish and search, C4 Request and track, C8 Notifications, C9 Basic report |
+| Saeed Alkaabi | 100063100 | Project setup and data model, C2 Departments and assets, C7 Dashboard, C8 Notifications, C9 Basic report, AI #5 Report summary |
+| Ali Alawadhi | 100063186 | C1 Login and roles, C3 Publish and search, C6 States and history, AI #2 Matching and ranking |
+| Humaid Al Ali | 100062914 | AI gateway, AI #1 Classification, C4 Request and track, C5 Approve and transfer |
