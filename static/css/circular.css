@@ -189,3 +189,187 @@ td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); }
 .facts { display: grid; grid-template-columns: 140px 1fr; gap: 6px 10px; font-size: 13px; }
 .facts dt { color: var(--muted); font-weight: bold; }
 @media (max-width: 760px) { .grid.three { grid-template-columns: 1fr; } .facts { grid-template-columns: 1fr; } }
+
+/* ==========================================================================
+   Visual polish (23 Nov): same colours and layout as the mockups, with
+   softer cards, clearer focus and hover states, and readable tables.
+   Only overrides; no class names changed, so no template needs editing.
+   ========================================================================== */
+:root {
+  --blue-dark: #173d80;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+  --shadow-up: 0 4px 12px rgba(16, 24, 40, .10);
+  --radius: 10px;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, "Liberation Sans", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.45;
+}
+
+/* Top bar: slight gradient and a small logo mark before the name */
+.topbar {
+  height: 54px;
+  background: linear-gradient(90deg, var(--blue-dark), var(--blue));
+  box-shadow: 0 2px 6px rgba(16, 24, 40, .18);
+  position: sticky; top: 0; z-index: 10;
+}
+.brand { display: flex; align-items: center; gap: 9px; letter-spacing: .2px; }
+.brand::before {
+  content: ""; width: 22px; height: 22px; border-radius: 50%;
+  border: 3px solid #a7f3d0; border-right-color: transparent;
+  transform: rotate(45deg);
+}
+.who .role { border-radius: 999px; padding: 2px 10px; }
+
+/* Side menu: a coloured marker on the open page */
+.side { width: 190px; padding: 16px 10px; background: #f7f9fc; }
+.side a { padding: 9px 12px; border-radius: 8px; border-left: 3px solid transparent; transition: background .15s, color .15s; }
+.side a:hover { background: #e6f2ea; color: var(--blue); }
+.side a.on { border-left-color: var(--blue); background: var(--blue-soft); }
+
+/* Content sits on the light page colour; cards are white and lifted */
+.content { background: var(--page); padding: 22px 28px 56px; }
+h1 { font-size: 23px; letter-spacing: -.2px; }
+h2 { font-size: 16.5px; }
+.sub { font-size: 13px; }
+
+.card {
+  border: 1px solid #dfe4ee; border-radius: var(--radius);
+  padding: 16px 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+}
+.card .card { box-shadow: none; }
+.card.ai { border: 1px solid var(--ai-line); border-left: 4px solid var(--ai-card); background: #f5fcfe; }
+.num { font-size: 28px; letter-spacing: -.3px; line-height: 1.2; }
+.kpi { font-size: 12px; line-height: 1.5; }
+.tag { border-radius: 999px; padding: 2px 9px; }
+
+/* Tables: rounded header, light stripes and a hover row */
+table { background: #fff; border-radius: 8px; overflow: hidden; }
+th { background: #edf4ef; font-size: 12px; text-transform: uppercase; letter-spacing: .3px; padding: 9px 10px; }
+td { padding: 9px 10px; vertical-align: top; }
+tbody tr:nth-child(even) td { background: #fafcfa; }
+tbody tr:hover td { background: #eef7f1; }
+.content > table { box-shadow: var(--shadow); border: 1px solid #dfe4ee; }
+
+/* Forms: clear focus ring */
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date],
+select, textarea { border-radius: 8px; transition: border-color .15s, box-shadow .15s; }
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(23, 105, 74, .18);
+}
+
+/* Buttons: hover, press and keyboard focus */
+.btn { border-radius: 8px; padding: 8px 16px; transition: background .15s, box-shadow .15s, transform .05s; }
+.btn:hover { background: #e8f4ed; }
+.btn.primary:hover { background: var(--blue-dark); }
+.btn.danger:hover { background: var(--bad-bg); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible, .side a:focus-visible { outline: 3px solid rgba(23, 105, 74, .35); outline-offset: 2px; }
+.top-actions .btn:hover { background: rgba(255, 255, 255, .15); }
+
+/* Messages and the "AI unavailable" box */
+.messages li { border-radius: 8px; padding: 10px 14px; box-shadow: var(--shadow); }
+.down { border-width: 1px; border-left: 4px solid #c0392b; border-radius: 8px; }
+
+/* Dashboard bars */
+.bar { height: 10px; border-radius: 999px; }
+.bar i { background: linear-gradient(90deg, var(--blue), var(--accent)); border-radius: 999px; }
+
+/* Sign-in page */
+.signin { margin-top: 56px; }
+.signin.card, .signin .card { padding: 26px 28px; box-shadow: var(--shadow-up); }
+
+.foot { background: #fff; }
+
+@media (max-width: 760px) {
+  .content { padding: 16px; }
+  .side { width: auto; }
+}
+
+/* ---------- Start page (C1): welcome banner, count tiles ---------- */
+.hero {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: linear-gradient(120deg, var(--blue-dark), var(--blue) 60%, var(--accent));
+  color: #fff; border-radius: 14px; padding: 22px 26px; margin-bottom: 18px; box-shadow: var(--shadow-up);
+}
+.hero h1 { color: #fff; font-size: 24px; }
+.hero-sub { color: rgba(255, 255, 255, .85); font-size: 13px; margin-top: 4px; }
+.hero .tag { background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .45); color: #fff; }
+.hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.hero-actions .btn { margin: 0; background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .6); }
+.hero-actions .btn:hover { background: rgba(255, 255, 255, .25); }
+.hero-actions .btn.primary { background: #fff; color: var(--blue); border-color: #fff; }
+.hero-actions .btn.primary:hover { background: #e8f4ed; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.tile {
+  display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: var(--ink);
+  background: #fff; border: 1px solid #dfe4ee; border-top: 4px solid var(--blue);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+  transition: transform .12s, box-shadow .12s;
+}
+.tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-up); }
+.tile.warn { border-top-color: #e0a100; }
+.tile.ok { border-top-color: var(--ok); }
+.tile.ai { border-top-color: var(--ai-card); }
+.tile-label { font-size: 12px; font-weight: bold; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+.tile-num { font-size: 32px; font-weight: bold; color: var(--blue); line-height: 1.15; }
+.tile.warn .tile-num { color: #9a6b00; }
+.tile.ok .tile-num { color: var(--ok); }
+.tile-hint { font-size: 12px; color: var(--muted); }
+details.card summary { cursor: pointer; list-style-position: inside; }
+details.card[open] summary { margin-bottom: 8px; }
+
+/* ---------- Colour scheme: Campus green (chosen 23 Nov) ----------
+   Same variable names as before, so every page follows. --blue now holds the
+   main green; the name is kept to avoid touching every rule. */
+:root {
+  --blue: #17694a;          /* top bar, primary buttons, numbers */
+  --blue-dark: #0e4a34;
+  --blue-soft: #d7efe1;     /* open menu item */
+  --accent: #22a36b;        /* gradients, bars */
+  --ink: #1b2a23;
+  --muted: #5a6b62;
+  --nav-ink: #33463c;
+  --page: #f2f4ef;          /* warm light grey */
+  --side: #fafbf8;
+  --line: #d9e1da;
+  --line-soft: #ebefea;
+  --input-line: #c4cfc7;
+}
+.side { background: var(--side); border-right-color: #e3e8e2; }
+.card, .tile, .content > table { border-color: #dde5de; }
+.avatar { color: var(--blue); }
+
+/* ---------- Profile menu (top right) ---------- */
+.usermenu { position: relative; }
+.usermenu summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.usermenu summary::-webkit-details-marker { display: none; }
+.usermenu summary::after { content: "\25BE"; font-size: 11px; opacity: .85; }
+.usermenu .avatar { box-shadow: 0 0 0 2px rgba(255, 255, 255, .5); }
+.usermenu-panel {
+  position: absolute; right: 0; top: 40px; width: 240px; z-index: 20;
+  background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, .18); padding: 8px; font-size: 13px;
+}
+.usermenu-head { padding: 8px 10px 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 6px; }
+.usermenu-head strong { display: block; }
+.usermenu-head span { color: var(--muted); font-size: 12px; word-break: break-all; }
+.usermenu-panel a, .usermenu-panel button {
+  display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;
+  color: var(--ink); text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer;
+}
+.usermenu-panel a:hover, .usermenu-panel button:hover { background: #e8f4ed; color: var(--blue); }
+.usermenu-panel form { margin: 4px 0 0; border-top: 1px solid var(--line-soft); padding-top: 4px; }
+.usermenu-panel button { color: var(--bad); }
+
+/* ---------- Start page: notices and recent activity ---------- */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.feed { list-style: none; }
+.feed li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+.feed li:last-child { border-bottom: 0; }
+.feed .when { color: var(--muted); font-size: 11.5px; display: block; }
+.feed .unread { font-weight: bold; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }

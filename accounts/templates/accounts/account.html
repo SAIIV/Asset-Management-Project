@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}My account - Circular Campus{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>My account</h1>
+    <div class="hero-sub">{{ user.email }}</div>
+  </div>
+  <span class="avatar" style="width:52px;height:52px;font-size:19px">{{ user.initials }}</span>
+</section>
+
+<div class="two-col">
+  <div class="card">
+    <h2>Profile</h2>
+    <dl class="facts">
+      <dt>E-mail</dt><dd>{{ user.email }}</dd>
+      <dt>Department</dt><dd>{{ user.department|default:"None" }}</dd>
+      <dt>Roles</dt><dd>{% for role in user.roles.all %}<span class="tag ok">{{ role }}</span>{% empty %}None{% endfor %}</dd>
+    </dl>
+    <p class="help">E-mail, department and roles are set by the Administrator, so the access rules stay under control.</p>
+    <form method="post" class="asset-form">{% csrf_token %}
+      <div class="field">
+        <label for="id_name">Full name</label>
+        <input type="text" name="name" id="id_name" value="{{ name_form.name.value|default:'' }}" maxlength="150" required>
+        {{ name_form.name.errors }}
+      </div>
+      <button type="submit" class="btn primary">Save name</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Security</h2>
+    <dl class="facts">
+      <dt>Password</dt><dd>••••••••</dd>
+      <dt>Last changed</dt><dd>{% if password_changed_at %}{{ password_changed_at|date:"j M Y, H:i" }}{% else %}Not changed since the account was created{% endif %}</dd>
+    </dl>
+    <div class="form-actions"><a class="btn primary" href="{% url 'change_password' %}">Change password</a></div>
+  </div>
+</div>
+{% endblock %}
