@@ -215,3 +215,15 @@ class PageTests(Flow):
         self.login(self.custodian)
         response = self.client.get(reverse("transfers:open_request", args=[self.request.pk]))
         self.assertRedirects(response, reverse("transfers:custodian_request", args=[self.request.pk]))
+
+    def test_inbox_link_still_opens_for_the_approver_after_the_request_moved_on(self):
+        self.approve()
+        transfer = Transfer.objects.get()
+        TransferService.release(self.custodian, transfer)
+        TransferService.receive(self.requester, transfer, "Good")
+        self.login(self.approver)
+        response = self.client.get(reverse("transfers:open_request", args=[self.request.pk]))
+        self.assertRedirects(response, reverse("transfers:approval_detail", args=[self.request.pk]))
+        page = self.client.get(reverse("transfers:approval_detail", args=[self.request.pk]))
+        self.assertEqual(page.status_code, 200)
+        self.assertNotContains(page, 'name="decision"')
