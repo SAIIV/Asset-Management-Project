@@ -73,7 +73,7 @@
         <td>T-{{ i.transfer.pk|stringformat:"04d" }}</td>
         <td>{{ i.transfer.asset.name }}</td>
         <td>{{ i.transfer.request.requester.department.name|default:"—" }}</td>
-        <td>{{ i.transfer.received_at|date:"Y-m-d" }}</td>
+        <td>{{ i.transfer.received_at|date:"j M Y" }}</td>
         <td>{{ i.avoided_cost_aed|floatformat:2 }}</td>
         <td>{{ i.diverted_mass_kg|floatformat:1|default:"—" }}</td>
         <td>{{ i.co2e_kg|floatformat:1|default:"—" }}</td>
@@ -88,6 +88,39 @@
 </div>
 {% endif %}
 
-{# Mockup 6: AI #5 writes a short narrative of these figures later. Until then: the "AI down" state. #}
-<div class="down">Narrative unavailable: the AI summary is not connected yet. All figures above are calculated without AI (P3-XR-08).</div>
+{# Mockup 6 / UC-38: AI #5 drafts the narrative, a person publishes it (gate 8). Numbers above never come from the AI. #}
+{% if f %}
+<div class="card ai">
+  <h2>Summary</h2>
+  {% if published %}
+    <p>{{ published.text }}</p>
+    <p class="kpi">AI draft{% if published.edited %}, edited{% endif %}, checked and published by {{ published.by.name }} on {{ published.at }}.
+      Every number in it matched the dashboard when it was published.</p>
+  {% else %}
+    <p class="kpi">No summary has been published yet.</p>
+  {% endif %}
+
+  {% if draft %}
+    {% if draft.fallback %}
+      <div class="down">{{ draft.message }}</div>
+    {% else %}
+    <form method="post" action="{{ request.get_full_path }}" class="card">
+      {% csrf_token %}
+      <input type="hidden" name="ai_record" value="{{ draft.record_id }}">
+      <span class="tag ai">AI draft</span>
+      {% if draft.ok %}<span class="tag ok">{{ draft.matched }} of {{ draft.checks|length }} numbers match the dashboard</span>
+      {% else %}<span class="tag bad">Publishing blocked: {{ draft.wrong|join:", " }} is not a figure of this dashboard</span>{% endif %}
+      <div class="field"><textarea name="text" rows="5" aria-label="Draft summary">{{ draft.text }}</textarea></div>
+      <button type="submit" name="action" value="publish" class="btn primary">Publish</button>
+      <button type="submit" name="action" value="discard" class="btn">Discard</button>
+      <p class="kpi">{% if draft.model %}Written by {{ draft.model }}. {% endif %}You can edit the text; the numbers are checked again when you publish.</p>
+    </form>
+    {% endif %}
+  {% endif %}
+
+  <form method="post" action="{{ request.get_full_path }}">{% csrf_token %}
+    <button type="submit" name="action" value="draft" class="btn">Draft {% if published %}a new {% endif %}summary with AI</button>
+  </form>
+</div>
+{% endif %}
 {% endblock %}

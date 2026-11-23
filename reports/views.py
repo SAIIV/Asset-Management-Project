@@ -9,15 +9,16 @@ it cannot be changed from the address bar.
 
 from datetime import date
 
+from django.contrib import messages
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from accounts.decorators import permission_required
 from accounts.permissions import Action
 from accounts.services import AuditService
 
-from .operational import REPORTS, request_rows, totals, transfer_rows, write_csv
+from .operational import REPORTS, request_rows, summary_facts, totals, transfer_rows, write_csv
 
 
 def _date(value):
@@ -49,13 +50,18 @@ def operational(request):
                                 "rows": len(rows)})
         return response
 
+    draft = None
+    if request.method == "POST" and request.POST.get("action") == "draft" and not error:
+        from ai.summary import draft_summary  # AI #5, Mockup 7: a draft only, the table stays the source
+        draft = draft_summary("operational", summary_facts(title, request.user.department, start, end, rows))
+
     query = request.GET.copy()
     query.pop("format", None)
     return render(request, "reports/operational.html", {
         "report": report, "reports": [(key, value[0]) for key, value in REPORTS.items()],
         "title": title, "columns": columns, "rows": [[row[key] for key, _ in columns] for row in rows],
         "count": len(rows), "totals": totals(rows), "start": start, "end": end, "error": error,
-        "csv_query": query.urlencode(),
+        "csv_query": query.urlencode(), "draft": draft,
     })
 
 
@@ -71,5 +77,39 @@ def sustainability(request):
     error = "The start date is after the end date." if start and end and start > end else ""
     sync_impacts()  # store the impact of any transfer received since the last visit
     figures = {} if error else dashboard(start, end)
-    return render(request, "reports/sustainability.html",
-                  {"f": figures, "start": start, "end": end, "error": error})
+    draft = _summary_action(request, figures, start, end) if request.method == "POST" and figures else None
+    if isinstance(draft, HttpResponse):
+        return draft
+    from ai.summary import latest_published
+
+    return render(request, "reports/sustainability.html", {
+        "f": figures, "start": start, "end": end, "error": error,
+        "draft": draft, "published": latest_published("sustainability"),
+    })
+
+
+def _summary_action(request, figures, start, end):
+    """AI #5 (UC-38, gate 8): draft a summary, then a person publishes or discards it."""
+    from ai.summary import Draft, SummaryError, check_numbers, discard_summary, draft_summary, publish_summary
+
+    from .sustainability import summary_facts
+
+    facts = summary_facts(figures, start, end)
+    action = request.POST.get("action")
+    record_id = int(request.POST.get("ai_record") or 0)
+    if action == "draft":
+        return draft_summary("sustainability", facts)
+    if action == "publish":
+        text = request.POST.get("text", "")
+        try:
+            publish_summary(request.user, "sustainability", record_id, text, facts)
+        except SummaryError as problem:
+            messages.error(request, str(problem))
+            return Draft(record_id=record_id, text=text.strip(), checks=check_numbers(text, facts))
+        messages.success(request, "The summary was published. Every number in it matches the dashboard.")
+        return redirect(request.get_full_path())
+    if action == "discard":
+        discard_summary(request.user, record_id)
+        messages.info(request, "The draft was discarded. Nothing was published.")
+        return redirect(request.get_full_path())
+    return None

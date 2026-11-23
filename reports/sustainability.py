@@ -129,3 +129,23 @@ def dashboard(start=None, end=None):
                           .order_by("-transfer__received_at"),
         "warm_version": WARM_VERSION,
     }
+
+
+def summary_facts(f, start=None, end=None):
+    """AI #5: the dashboard figures the draft summary may use, exactly as shown on the page."""
+    from ai.summary import plain
+
+    return {
+        "report": "Sustainability dashboard (all departments)",
+        "period": {"from": str(start or "the first record"), "to": str(end or "today")},
+        "items reused (received permanent transfers)": f["reuse_count"],
+        "reuse rate, percent of published items": plain(f["reuse_rate"]),
+        "items published": f["published_assets"],
+        "avoided purchase cost, AED": plain(f["avoided_aed"]),
+        "mass kept out of disposal, kg": plain(f["diverted_kg"]),
+        "avoided emissions, kg CO2e": plain(f["co2e_kg"]),
+        "missing data": {"reused items without an estimated value": f["no_baseline"],
+                         "reused items without a recorded mass": f["no_mass"],
+                         "reused items without a CO2e figure": f["no_co2e"]},
+        "reuse by category": [{"category": name, "items": n} for name, n, _ in f["by_category"]],
+    }

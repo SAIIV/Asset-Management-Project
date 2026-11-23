@@ -115,3 +115,12 @@ def write_csv(rows, columns, file):
     for row in rows:
         writer.writerow([_safe(row[key]) for key, _ in columns])
 
+
+def summary_facts(title, department, start, end, rows):
+    """AI #5: the figures the draft summary may use (counts only; no names of people)."""
+    return {
+        "report": title, "department": str(department or ""),
+        "period": {"from": str(start or "the first record"), "to": str(end or "today")},
+        "rows in the table": len(rows),
+        "rows by status": [{"status": status, "count": n} for status, n in totals(rows)],
+    }

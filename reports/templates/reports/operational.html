@@ -40,6 +40,26 @@
   <p class="kpi">{{ count }} row{{ count|pluralize }}{% for status, n in totals %} · {{ status }}: {{ n }}{% endfor %}</p>
 </div>
 
-{# Mockup 7: AI #5 writes a short draft summary of this table later. Until then: the "AI down" state. #}
-<div class="down">Summary unavailable: the AI activity summary is not connected yet. The table, totals and CSV export work as normal (P3-XR-08).</div>
+{# Mockup 7: AI #5 activity summary. A draft only: the table above stays the source of every number. #}
+<div class="card ai">
+  <h2>Activity summary</h2>
+  {% if draft %}
+    {% if draft.fallback %}
+      <div class="down">{{ draft.message }}</div>
+    {% else %}
+      <span class="tag ai">AI draft</span>
+      {% if draft.ok %}<span class="tag ok">{{ draft.matched }} of {{ draft.checks|length }} numbers match the table</span>
+      {% else %}<span class="tag bad">Not usable: {{ draft.wrong|join:", " }} is not in the table</span>{% endif %}
+      <p>{{ draft.text }}</p>
+      <p class="kpi">Written by {{ draft.model }} from the totals above only. Check it before you use it.</p>
+    {% endif %}
+  {% else %}
+    <p class="kpi">Press the button for a short AI-written summary of this table. Every number in it is checked against the table.</p>
+  {% endif %}
+  {% if not error %}
+  <form method="post" action="?{{ csv_query }}">{% csrf_token %}
+    <button type="submit" name="action" value="draft" class="btn">Draft summary with AI</button>
+  </form>
+  {% endif %}
+</div>
 {% endblock %}
