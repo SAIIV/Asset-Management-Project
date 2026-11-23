@@ -13,6 +13,11 @@ from django.db import models
 from circular_campus.choices import RoleName, choices_check
 
 
+def normalize(email):
+    """E-mail addresses are stored in lower case, so one address can only ever be one account."""
+    return (email or "").strip().lower()
+
+
 class UserManager(BaseUserManager):
     """Users sign in with their email address (email is unique)."""
 
@@ -21,7 +26,7 @@ class UserManager(BaseUserManager):
     def _create_user(self, email, password, **extra):
         if not email:
             raise ValueError("Users must have an email address.")
-        user = self.model(email=self.normalize_email(email), **extra)
+        user = self.model(email=normalize(email), **extra)
         user.set_password(password)  # stored as a PBKDF2 hash, never plain text
         user.save(using=self._db)
         return user
@@ -75,6 +80,16 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.name} <{self.email}>"
+
+    def clean(self):
+        super().clean()
+        self.email = normalize(self.email)
+        if User.objects.filter(email=self.email).exclude(pk=self.pk).exists():
+            raise ValidationError({"email": "An account with this e-mail address already exists."})
+
+    def save(self, *args, **kwargs):
+        self.email = normalize(self.email)  # also for accounts made in Django admin
+        super().save(*args, **kwargs)
 
     @property
     def initials(self):

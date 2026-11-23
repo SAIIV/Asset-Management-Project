@@ -144,7 +144,24 @@ class StatusPageTests(TestCase):
         self.client.login(email=requester.email, password=PASSWORD)
         self.assertEqual(self.post_move(asset, A.UNDER_MAINTENANCE).status_code, 403)
 
+    def test_pressing_change_status_without_a_choice_changes_nothing(self):
+        asset = make_asset(owner_department=self.dept, status=A.AVAILABLE)
+        response = self.post_move(asset, "")
+        self.assertEqual(Asset.objects.get(pk=asset.pk).status, A.AVAILABLE)
+        self.assertContains(self.client.get(response.url), "Choose a new status first")
+
+    def test_draft_needs_complete_listing_fields_to_become_available(self):
+        asset = make_asset(owner_department=self.dept, status=A.DRAFT)
+        response = self.post_move(asset, A.AVAILABLE)
+        self.assertEqual(Asset.objects.get(pk=asset.pk).status, A.DRAFT)
+        self.assertContains(self.client.get(response.url), "Not ready to be Available yet")
+        ready = make_asset(owner_department=self.dept, status=A.DRAFT, description="Works", campus="Main",
+                           building="B1", room="101")
+        self.post_move(ready, A.AVAILABLE)
+        self.assertEqual(Asset.objects.get(pk=ready.pk).status, A.AVAILABLE)
+
     def test_detail_page_shows_status_form_and_history(self):
+
         asset = make_asset(owner_department=self.dept, status=A.DRAFT)
         page = self.client.get(reverse("assets:detail", args=[asset.pk]))
         self.assertContains(page, 'value="Available"')

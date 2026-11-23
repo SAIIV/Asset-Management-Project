@@ -17,6 +17,10 @@ def with_role(user, name):
     return user
 
 
+#: what a listing needs (UC-06 step 4)
+LISTING = {"description": "Working, with charger", "campus": "Main", "building": "B1", "room": "101"}
+
+
 class SearchTests(TestCase):
     def setUp(self):
         self.it, self.lab = make_department(name="IT Services"), make_department(name="Chemistry")
@@ -49,17 +53,38 @@ class PublishTests(TestCase):
         self.user = make_user()
 
     def test_publish_available_asset_writes_audit_row(self):
-        asset = make_asset(status=A.AVAILABLE)
+        asset = make_asset(status=A.AVAILABLE, **LISTING)
         CatalogueService.publish(self.user, asset)
         self.assertTrue(Asset.objects.get(pk=asset.pk).is_listed)
         self.assertTrue(AuditLog.objects.filter(action="publish_asset", record_id=asset.pk).exists())
 
-    def test_cannot_publish_draft_or_reserved(self):
-        for status in (A.DRAFT, A.RESERVED, A.UNDER_MAINTENANCE):
-            asset = make_asset(status=status)
+    def test_cannot_publish_reserved_or_under_maintenance(self):
+        for status in (A.RESERVED, A.UNDER_MAINTENANCE, A.IN_USE):
+            asset = make_asset(status=status, **LISTING)
             with self.assertRaises(CatalogueError):
                 CatalogueService.publish(self.user, asset)
             self.assertFalse(Asset.objects.get(pk=asset.pk).is_listed)
+
+    def test_missing_listing_fields_block_publishing(self):
+        asset = make_asset(status=A.AVAILABLE, description="Working", campus="Main")
+        with self.assertRaisesMessage(CatalogueError, "fill in the building, room"):
+            CatalogueService.publish(self.user, asset)
+        self.assertFalse(Asset.objects.get(pk=asset.pk).is_listed)
+
+    def test_unserviceable_asset_is_not_published(self):
+        broken = make_asset(status=A.AVAILABLE, condition="NeedsRepair", **LISTING)
+        with self.assertRaisesMessage(CatalogueError, "needs repair"):
+            CatalogueService.publish(self.user, broken)
+        failed = make_asset(status=A.AVAILABLE, serviceability=False, **LISTING)
+        with self.assertRaisesMessage(CatalogueError, "not serviceable"):
+            CatalogueService.publish(self.user, failed)
+
+    def test_draft_is_made_available_and_listed(self):
+        asset = make_asset(status=A.DRAFT, **LISTING)
+        CatalogueService.publish(self.user, asset)
+        asset.refresh_from_db()
+        self.assertEqual((asset.status, asset.is_listed), (A.AVAILABLE, True))
+        self.assertTrue(AuditLog.objects.filter(action="change_asset_status", record_id=asset.pk).exists())
 
     def test_unpublish(self):
         asset = make_asset(status=A.AVAILABLE, is_listed=True)
@@ -102,13 +127,21 @@ class CataloguePageTests(TestCase):
         self.assertContains(self.client.get(reverse("home")), f'href="{reverse("exchange:catalogue")}"')
 
     def test_custodian_publishes_from_asset_page(self):
-        asset = make_asset(owner_department=self.dept, status=A.AVAILABLE)
+        asset = make_asset(owner_department=self.dept, status=A.AVAILABLE, **LISTING)
         self.login(self.custodian)
         self.assertContains(self.client.get(reverse("assets:detail", args=[asset.pk])), "Publish to catalogue")
         self.client.post(reverse("exchange:publish", args=[asset.pk]))
         self.assertTrue(Asset.objects.get(pk=asset.pk).is_listed)
 
+    def test_refusal_is_shown_on_the_asset_page(self):
+        asset = make_asset(owner_department=self.dept, status=A.AVAILABLE)
+        self.login(self.custodian)
+        response = self.client.post(reverse("exchange:publish", args=[asset.pk]), follow=True)
+        self.assertContains(response, "Not published yet: fill in the description, campus, building, room")
+        self.assertFalse(Asset.objects.get(pk=asset.pk).is_listed)
+
     def test_requester_cannot_publish(self):
+
         asset = make_asset(owner_department=self.other, status=A.AVAILABLE)
         self.login(self.requester)
         self.assertEqual(self.client.post(reverse("exchange:publish", args=[asset.pk])).status_code, 403)

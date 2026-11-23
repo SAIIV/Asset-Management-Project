@@ -99,6 +99,7 @@ def asset_detail(request, pk):
         "details": details_of(asset, kind),
         "locked": asset.status in LOCKED_STATUSES,
         "moves": custodian_moves(asset),
+        "move_choices": [(state, AssetStatus(state).label, event) for state, event in custodian_moves(asset).items()],
         "history": history_of("Asset", asset.pk)[:5],
     })
 
@@ -110,14 +111,24 @@ def asset_move(request, pk):
     if request.method != "POST":
         return redirect("assets:detail", pk=asset.pk)
     new_status = request.POST.get("status", "")
+    if not new_status:
+        messages.warning(request, "Choose a new status first. Nothing was changed.")
+        return redirect("assets:detail", pk=asset.pk)
     # Only the moves offered on the page; reserve, release, receive and retire
     # are made by the request and transfer services, not typed in here.
     if new_status not in custodian_moves(asset):
         messages.error(request, f"An asset that is {asset.get_status_display()} cannot be moved to "
                                 f"“{new_status or 'nothing'}” from this page.")
         return redirect("assets:detail", pk=asset.pk)
+    if asset.status == AssetStatus.DRAFT and new_status == AssetStatus.AVAILABLE:
+        from exchange.catalogue import publish_problems  # "complete fields + serviceable (UC-06)"
+        problems = publish_problems(asset)
+        if problems:
+            messages.error(request, f"Not ready to be Available yet: {'; '.join(problems)}.")
+            return redirect("assets:detail", pk=asset.pk)
     try:
         StateService.move(request.user, asset, new_status, reason=request.POST.get("reason", "").strip(),
+
                           action="change_asset_status")
     except IllegalMove as error:
         messages.error(request, str(error))

@@ -20,7 +20,7 @@
     {% if asset.is_listed %}
       <form method="post" action="{% url 'exchange:unpublish' asset.pk %}" class="inline-form">{% csrf_token %}
         <button type="submit" class="btn">Remove from catalogue</button></form>
-    {% elif asset.status == "Available" %}
+    {% elif asset.status == "Available" or asset.status == "Draft" %}
       <form method="post" action="{% url 'exchange:publish' asset.pk %}" class="inline-form">{% csrf_token %}
         <button type="submit" class="btn primary">Publish to catalogue</button></form>
     {% endif %}
@@ -59,15 +59,20 @@
   <div class="card">
     <h2>Status</h2>
     <p>Now: <span class="tag">{{ asset.get_status_display }}</span></p>
+    <p class="kpi">Use this only when the item itself changes, for example it breaks and goes for repair.
+      Reserving, releasing and receiving happen through requests and transfers.
+      {% if asset.status == "Available" %}Moving it out of Available also takes it off the catalogue.{% endif %}</p>
     {% if moves %}
       <form method="post" action="{% url 'assets:move' asset.pk %}" class="asset-form">
         {% csrf_token %}
         <div class="field">
           <label for="id_status">Move to</label>
-          <select name="status" id="id_status">
-            {% for state, event in moves.items %}<option value="{{ state }}">{{ state }} ({{ event }})</option>{% endfor %}
+          <select name="status" id="id_status" required>
+            <option value="">Choose a new status…</option>
+            {% for state, label, event in move_choices %}<option value="{{ state }}">{{ label }}: {{ event }}</option>{% endfor %}
           </select>
         </div>
+
         <div class="field">
           <label for="id_reason">Reason (kept in the history)</label>
           <input type="text" name="reason" id="id_reason" maxlength="300" placeholder="e.g. screen cracked, sent for repair">
