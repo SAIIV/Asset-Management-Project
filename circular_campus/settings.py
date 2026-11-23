@@ -135,6 +135,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # --- Language and time ----------------------------------------------------
 LANGUAGE_CODE = "en-us"
+FORMAT_MODULE_PATH = ["circular_campus.formats"]  # dates shown as 19 Nov 2026 everywhere
+
 TIME_ZONE = "Asia/Dubai"
 USE_I18N = True
 USE_TZ = True

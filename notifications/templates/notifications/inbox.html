@@ -27,7 +27,7 @@
       <tr>
         <td>{% if not note.read_at %}<span class="tag ai">New</span>{% endif %}</td>
         <td>{% if not note.read_at %}<strong>{{ note.message }}</strong>{% else %}{{ note.message }}{% endif %}</td>
-        <td>{{ note.linked_record|default:"—" }}</td>
+        <td>{{ note.about|default:"—" }}</td>
         <td>{{ note.created_at|date:"j M Y, H:i" }}</td>
         <td>
           <form method="post" action="{% url 'notifications:open' note.pk %}">{% csrf_token %}
