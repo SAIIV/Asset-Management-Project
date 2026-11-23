@@ -59,6 +59,7 @@ class AssistantTests(TestCase):
         self.assertNotIn(self.user.email, str(facts))
         self.assertIn("catalogue", facts["pagesYouCanOpen"])
         self.assertNotIn("approvals", facts["pagesYouCanOpen"])
+        self.assertIn("Search listed assets", facts["whatYourRolesCanDo"])
 
     def test_answer_keeps_only_found_items_and_allowed_pages(self):
         reply = {"answer": "Physics has a Dell laptop.", "itemIds": [self.laptop.pk, self.chair.pk, 999],
